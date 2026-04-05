@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-04-05T00:00:00.000Z" agent="ChatGPT" version="24.7.17" editor="www.diagrams.net">
+<diagram id="equipment-arch-sample" name="機器管理システム">
+<mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+<root>
+<mxCell id="0"/>
+<mxCell id="1" parent="0"/>
+<mxCell id="2" value="機器管理システム アーキテクト図（サンプル）" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" parent="1" vertex="1">
+<mxGeometry x="40" y="20" width="600" height="30" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="3" value="対象: 保有機器の台帳管理、点検・校正期限管理、入出庫・履歴追跡、通知、外部システム連携" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
+<mxGeometry x="40" y="52" width="1100" height="20" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="10" value="利用者 / 現場端末" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontStyle=1;align=left;verticalAlign=top;spacingTop=8;spacingLeft=8;fillColor=#FFF2CC;strokeColor=#D6B656;" parent="1" vertex="1">
+<mxGeometry x="40" y="100" width="220" height="610" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="20" value="機器管理システム（社内ネットワーク / クラウド）" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontStyle=1;align=left;verticalAlign=top;spacingTop=8;spacingLeft=8;fillColor=#DAE8FC;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="300" y="100" width="690" height="610" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="30" value="データ / 外部連携" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontStyle=1;align=left;verticalAlign=top;spacingTop=8;spacingLeft=8;fillColor=#E1D5E7;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1030" y="100" width="360" height="610" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="40" value="運用・統制" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fontStyle=1;align=left;verticalAlign=top;spacingTop=8;spacingLeft=8;fillColor=#D5E8D4;strokeColor=#82B366;" parent="1" vertex="1">
+<mxGeometry x="300" y="730" width="1090" height="120" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="101" value="作業者" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFF8E1;strokeColor=#D6B656;" parent="1" vertex="1">
+<mxGeometry x="70" y="150" width="160" height="50" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="102" value="保全 / 管理者" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFF8E1;strokeColor=#D6B656;" parent="1" vertex="1">
+<mxGeometry x="70" y="220" width="160" height="50" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="103" value="PC / Webブラウザ" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#999999;" parent="1" vertex="1">
+<mxGeometry x="70" y="320" width="160" height="60" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="104" value="ハンディ端末
+(バーコード / RFID)" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#999999;" parent="1" vertex="1">
+<mxGeometry x="70" y="410" width="160" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="105" value="点検 / 校正実施" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#999999;" parent="1" vertex="1">
+<mxGeometry x="70" y="520" width="160" height="60" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="106" value="ラベル発行" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#999999;" parent="1" vertex="1">
+<mxGeometry x="70" y="610" width="160" height="60" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="201" value="Web UI" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="340" y="150" width="140" height="60" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="202" value="API Gateway" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="520" y="150" width="140" height="60" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="203" value="認証 / 権限制御" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="700" y="150" width="180" height="60" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="211" value="機器台帳サービス" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="340" y="270" width="160" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="212" value="保守計画サービス
+(点検・校正期限)" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="540" y="270" width="170" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="213" value="入出庫 / 貸出台帳
+サービス" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="750" y="270" width="170" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="221" value="履歴 / 監査ログ
+サービス" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="340" y="390" width="160" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="222" value="通知サービス" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="540" y="390" width="170" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="223" value="連携サービス" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="750" y="390" width="170" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="231" value="帳票 / ラベル生成" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="340" y="510" width="160" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="232" value="ワークフロー / 承認" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="540" y="510" width="170" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="233" value="マスタ管理
+(機種・部署・設置場所)" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#6C8EBF;" parent="1" vertex="1">
+<mxGeometry x="750" y="510" width="170" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="301" value="SSO / IdP
+(社内認証基盤)" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1070" y="150" width="140" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="302" value="機器管理DB" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1240" y="150" width="120" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="311" value="文書保管
+(手順書・点検記録)" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1070" y="280" width="140" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="312" value="ファイルストレージ
+(添付・写真)" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1240" y="280" width="120" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="321" value="ERP / MES / 資産台帳" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1070" y="410" width="140" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="322" value="校正管理システム" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1240" y="410" width="120" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="331" value="メール / Teams / Slack" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1070" y="540" width="140" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="332" value="BI / 分析基盤" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#9673A6;" parent="1" vertex="1">
+<mxGeometry x="1240" y="540" width="120" height="70" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="401" value="監視 / アラート" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#82B366;" parent="1" vertex="1">
+<mxGeometry x="340" y="770" width="170" height="50" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="402" value="バックアップ / リストア" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#82B366;" parent="1" vertex="1">
+<mxGeometry x="560" y="770" width="180" height="50" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="403" value="操作ログ・証跡保全" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#82B366;" parent="1" vertex="1">
+<mxGeometry x="790" y="770" width="180" height="50" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="404" value="権限棚卸 / 監査対応" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;fillColor=#FFFFFF;strokeColor=#82B366;" parent="1" vertex="1">
+<mxGeometry x="1020" y="770" width="180" height="50" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="500" value="操作 / 閲覧" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="103" target="201">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="501" value="スキャン結果" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="104" target="202">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="502" value="点検結果 / 校正結果" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="105" target="212">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="503" value="ラベル発行要求" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="106" target="231">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="504" value="利用" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="101" target="103">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="505" value="管理" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="102" target="103">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="506" value="棚卸 / 現場確認" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="102" target="104">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="507" value="UI API 呼出" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="201" target="202">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="508" value="認証確認" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="202" target="203">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="509" value="機器参照 / 更新" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="202" target="211">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="510" value="期限照会 / 更新" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="202" target="212">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="511" value="貸出 / 返却" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="202" target="213">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="512" value="変更履歴" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="211" target="221">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="513" value="期限変更履歴" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="212" target="221">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="514" value="入出庫履歴" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="213" target="221">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="515" value="期限通知要求" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="212" target="222">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="516" value="マスタ同期" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="223" target="211">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="517" value="校正データ反映" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="223" target="212">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="518" value="資産情報連携" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="223" target="213">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="519" value="承認結果反映" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="232" target="211">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="520" value="帳票保存" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="231" target="312">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="521" value="マスタ参照" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="211" target="233">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="522" value="マスタ参照" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="212" target="233">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="523" value="マスタ参照" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="213" target="233">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="524" value="SSO / Token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="203" target="301">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="525" value="機器台帳 CRUD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="211" target="302">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="526" value="保守計画 CRUD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="212" target="302">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="527" value="貸出 / 返却 CRUD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="213" target="302">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="528" value="監査証跡保存" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="221" target="302">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="529" value="申請書 / 記録書" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="232" target="311">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="530" value="PDF / ラベル" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="231" target="312">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="531" value="設備 / 資産マスタ同期" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="223" target="321">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="532" value="校正実績 / 期限" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="223" target="322">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="533" value="メール / チャット通知" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="222" target="331">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="534" value="履歴データ連携" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="221" target="332">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="535" value="証跡連携" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="221" target="403">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="536" value="DBバックアップ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="302" target="402">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="537" value="異常監視指標" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="221" target="401">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="538" value="権限情報" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=1.5;fontSize=11;" parent="1" edge="1" source="203" target="404">
+<mxGeometry relative="1" as="geometry"></mxGeometry>
+</mxCell>
+<mxCell id="450" value="凡例:
+青 = アプリケーション
+紫 = データ / 外部システム
+黄 = 利用者 / 端末
+緑 = 運用・統制" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#CCCCCC;fillColor=#F5F5F5;fontSize=11;align=left;verticalAlign=top;spacing=6;" parent="1" vertex="1">
+<mxGeometry x="1180" y="20" width="210" height="70" as="geometry"></mxGeometry>
+</mxCell>
+</root></mxGraphModel></diagram></mxfile>
