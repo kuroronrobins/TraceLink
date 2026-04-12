@@ -18,6 +18,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+/**
+ * 実機なしで開発・テストするための fake reader。
+ *
+ * `ReaderGateway` と同じ契約で動くため、Repository や UI は real RP902 と同じ経路で扱える。
+ * 同一 EPC を混ぜた fake データを流し、`InventorySession` の重複除去を確認しやすくしている。
+ */
 class FakeReaderGateway(
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val readDelayMillis: Long = 650L,
@@ -55,6 +61,8 @@ class FakeReaderGateway(
         }
         if (inventoryJob?.isActive == true) return
 
+        // fake EPC を一定間隔で流す。ここでは重複を含めることで、
+        // 画面の unique tag 表示と readCount 更新が自然に確認できる。
         inventoryJob = scope.launch {
             var index = 0
             while (isActive) {
@@ -91,4 +99,3 @@ class FakeReaderGateway(
         )
     }
 }
-

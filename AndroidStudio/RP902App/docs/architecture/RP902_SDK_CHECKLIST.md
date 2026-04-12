@@ -9,7 +9,21 @@
 - [x] Reader initialization candidates checked from Javadoc/sample
 - [x] Connection mode selected: Bluetooth transport with RP902
 - [x] Vendor AAR/JAR added as local app file dependencies
+- [x] Vendor build inputs normalized under `vendor/unitech/runtime`
+- [x] Original vendor distribution isolated under `vendor/unitech/upstream`
+- [x] Reference docs copied under `vendor/unitech/docs`
 - [x] Real gateway compiles against confirmed vendor classes
-- [ ] Runtime permission request UX implemented
-- [ ] Bluetooth enablement and pairing flow implemented
+- [x] App-owned runtime permission request foundation implemented
+- [x] App-owned Bluetooth status preflight foundation implemented
+- [x] Real gateway diagnostic logs added for connect/inventory/disconnect/callback observation
+- [x] Real tag callback mapping guarded against null, blank, oversized, and duplicate-listener edge cases
+- [x] DisplayOutput JNI crash path suppressed inside the real RP902 adapter
+- [x] Real gateway reader commands moved off the UI thread
+- [x] Sample-backed RP902 UHF inventory tuning added before `inventory6c()`
+- [x] Inventory stop summary logs callback count, accepted tag count, mapping failures, and last tag timestamp
+- [x] UHF listener identity diagnostics added for connect/start/stop callback isolation
+- [ ] Vendor license and redistribution terms confirmed
+- [ ] Runtime permission UX validated on target hardware
+- [ ] Bluetooth enablement and pairing flow validated on target hardware
+- [ ] Vendor native library 16 KB page-size alignment resolved or accepted for target devices
 - [ ] Real device test completed

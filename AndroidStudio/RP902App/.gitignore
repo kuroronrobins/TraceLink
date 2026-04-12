@@ -1,6 +1,7 @@
 *.iml
 .gradle
 /local.properties
+**/build/
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -13,3 +14,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local vendor staging only. Keep app-facing runtime/docs tracked separately.
+/vendor/unitech/incoming/
+/vendor/unitech/tmp/
+/vendor/unitech/upstream/

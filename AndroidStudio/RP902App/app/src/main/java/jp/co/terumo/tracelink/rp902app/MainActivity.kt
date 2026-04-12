@@ -13,10 +13,20 @@ import jp.co.terumo.tracelink.rp902app.ui.inventory.InventoryViewModelFactory
 import jp.co.terumo.tracelink.rp902app.ui.settings.SettingsViewModel
 import jp.co.terumo.tracelink.rp902app.ui.settings.SettingsViewModelFactory
 
+/**
+ * Android アプリの起動点。
+ *
+ * ここでは依存関係を `AppContainer` から受け取り、画面に渡す ViewModel を作るだけに留める。
+ * reader 接続、inventory、upload などの実処理を Activity に置かないことで、
+ * 画面のライフサイクルと業務ロジックが混ざるのを避けている。
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // このアプリではまだ DI framework を入れていないため、
+        // AppContainer が手動 DI の役割を持つ。
         val appContainer = AppContainer()
         val inventoryViewModel = ViewModelProvider(
             this,
@@ -24,7 +34,10 @@ class MainActivity : ComponentActivity() {
         )[InventoryViewModel::class.java]
         val settingsViewModel = ViewModelProvider(
             this,
-            SettingsViewModelFactory(appContainer.readerSettingsRepository()),
+            SettingsViewModelFactory(
+                readerSettingsRepository = appContainer.readerSettingsRepository(),
+                readerRuntimeStateRepository = appContainer.readerRuntimeStateRepository(),
+            ),
         )[SettingsViewModel::class.java]
         setContent {
             TraceLink_RP902AppTheme {

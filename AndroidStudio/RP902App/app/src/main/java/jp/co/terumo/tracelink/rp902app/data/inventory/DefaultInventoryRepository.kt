@@ -13,6 +13,7 @@ import jp.co.terumo.tracelink.rp902app.domain.log.AppLogLevel
 import jp.co.terumo.tracelink.rp902app.domain.log.EventLogStore
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderConnectionState
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGateway
+import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEventLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
 import jp.co.terumo.tracelink.rp902app.domain.reader.displayText
 import jp.co.terumo.tracelink.rp902app.domain.upload.InventoryUploadPayload
@@ -27,11 +28,19 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * Inventory 機能の orchestration 実装。
+ *
+ * reader からの tag read、session 内重複除去、upload、retry queue、structured log を
+ * ここで組み合わせる。vendor SDK の詳細は `ReaderGateway` の内側に、HTTP の詳細は
+ * `UploadRepository` の内側に閉じ込めることで、UI はこの repository state だけを見ればよい。
+ */
 class DefaultInventoryRepository(
     private val readerGateway: ReaderGateway = FakeReaderGateway(),
     private val uploadRepository: UploadRepository = FakeUploadRepository(),
@@ -51,6 +60,8 @@ class DefaultInventoryRepository(
     override val state: StateFlow<InventoryRepositoryState> = _state.asStateFlow()
 
     init {
+        // LogStore / RetryQueue / ReaderGateway の Flow を repository state に集約する。
+        // ここが Inventory 画面と Logs 画面の source of truth になる。
         eventLogStore.logs
             .onEach { logs ->
                 _state.update { current -> current.copy(logs = logs) }
@@ -68,6 +79,8 @@ class DefaultInventoryRepository(
                 _state.update { current ->
                     current.copy(
                         connectionState = connectionState,
+                        // 接続が切れた場合、画面上の inventory running も止める。
+                        // 実機側の stop 完了は gateway log で別途確認する。
                         isInventoryRunning = current.isInventoryRunning &&
                             connectionState == ReaderConnectionState.Connected,
                     )
@@ -85,7 +98,33 @@ class DefaultInventoryRepository(
             .launchIn(scope)
 
         readerGateway.tagReads
+            // tag read は gateway から非同期に流れてくる。
+            // 重複除去と state 更新は recordRead に閉じ込め、UI からは直接触らない。
             .onEach(::recordRead)
+            .catch { throwable ->
+                appendLog(
+                    level = AppLogLevel.Error,
+                    category = AppLogCategory.Inventory,
+                    message = "Reader tag stream failed before repository update: ${throwable.message.orEmpty()}",
+                )
+            }
+            .launchIn(scope)
+
+        readerGateway.events
+            .onEach { event ->
+                appendLog(
+                    level = event.level.toAppLogLevel(),
+                    category = AppLogCategory.Reader,
+                    message = event.message,
+                )
+            }
+            .catch { throwable ->
+                appendLog(
+                    level = AppLogLevel.Error,
+                    category = AppLogCategory.Reader,
+                    message = "Reader diagnostic stream failed: ${throwable.message.orEmpty()}",
+                )
+            }
             .launchIn(scope)
 
         scope.launch {
@@ -157,6 +196,8 @@ class DefaultInventoryRepository(
     }
 
     override suspend fun uploadSession() {
+        // upload は現在の session snapshot を payload 化してから実行する。
+        // 空 session は backend へ送らず、画面に失敗状態として返す。
         val payload = inventorySession.toUploadPayload(
             sessionId = sessionIdFactory(),
             sentAtEpochMillis = clock(),
@@ -211,6 +252,8 @@ class DefaultInventoryRepository(
         var lastFailureMessage: String? = null
 
         pendingUploads.forEach { pendingUpload ->
+            // 失敗が残っても他の pending upload は続けて試す。
+            // 長期運用では network/backoff 方針をここから分離する可能性がある。
             val result = upload(pendingUpload.payload)
             when (result) {
                 UploadResult.Success -> {
@@ -253,13 +296,18 @@ class DefaultInventoryRepository(
     }
 
     private suspend fun recordRead(read: ReaderTagRead) {
+        // InventorySession は blank EPC などを拒否することがある。
+        // callback 由来の想定外値でアプリ全体を落とさないよう、ログ付きで安全に失敗させる。
         runCatching { inventorySession.record(read) }
             .onSuccess { tags ->
                 _state.update { current -> current.copy(tags = tags) }
+                val recordedTag = tags.firstOrNull { tag -> tag.epc == read.epc }
                 appendLog(
                     level = AppLogLevel.Info,
                     category = AppLogCategory.Inventory,
-                    message = "Read EPC ${read.epc}",
+                    message = "Read EPC ${read.epc}; " +
+                        "repositoryAccepted=true uniqueTags=${tags.size} " +
+                        "readCount=${recordedTag?.readCount ?: "unknown"}",
                 )
             }
             .onFailure { throwable ->
@@ -276,6 +324,8 @@ class DefaultInventoryRepository(
         result: UploadResult,
         queueOnFailure: Boolean,
     ) {
+        // upload transport と retry queue を分けておくことで、
+        // 本物 backend と永続 retry storage を別々に差し替えられる。
         when (result) {
             UploadResult.Success -> {
                 uploadRetryQueue.remove(payload.sessionId)
@@ -340,5 +390,11 @@ class DefaultInventoryRepository(
             category = category,
             message = message,
         )
+    }
+
+    private fun ReaderGatewayEventLevel.toAppLogLevel(): AppLogLevel = when (this) {
+        ReaderGatewayEventLevel.Info -> AppLogLevel.Info
+        ReaderGatewayEventLevel.Warning -> AppLogLevel.Warning
+        ReaderGatewayEventLevel.Error -> AppLogLevel.Error
     }
 }

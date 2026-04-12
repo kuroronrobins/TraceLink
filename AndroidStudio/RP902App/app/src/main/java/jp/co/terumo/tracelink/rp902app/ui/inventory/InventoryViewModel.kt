@@ -11,6 +11,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/**
+ * Inventory 画面用の ViewModel。
+ *
+ * Repository が持つ domain/data state を、画面が表示しやすい `InventoryUiState` に投影する。
+ * ボタン操作はここで coroutine に乗せて Repository へ渡すが、reader SDK や upload transport の
+ * 詳細は扱わない。これにより Composable は状態表示と callback 通知だけに集中できる。
+ */
 class InventoryViewModel(
     private val inventoryRepository: InventoryRepository,
 ) : ViewModel() {
@@ -70,12 +77,16 @@ class InventoryViewModel(
     }
 
     private fun runRepositoryCommand(command: suspend () -> Unit) {
+        // 画面操作ごとに viewModelScope で起動する。
+        // Repository 側が例外をログ付きで扱うため、UI は状態更新を待つだけでよい。
         viewModelScope.launch {
             command()
         }
     }
 }
 
+// UI state は repository state の「表示用コピー」。
+// ここで upload pending 件数など、画面で扱いやすい形に変換する。
 private fun InventoryRepositoryState.toUiState(): InventoryUiState = InventoryUiState(
     connectionState = connectionState,
     isInventoryRunning = isInventoryRunning,

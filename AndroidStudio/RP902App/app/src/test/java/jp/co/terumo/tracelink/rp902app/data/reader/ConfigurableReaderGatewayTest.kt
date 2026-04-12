@@ -1,10 +1,14 @@
 package jp.co.terumo.tracelink.rp902app.data.reader
 
+import jp.co.terumo.tracelink.rp902app.data.reader.bluetooth.InMemoryReaderRuntimeStateRepository
 import jp.co.terumo.tracelink.rp902app.data.settings.InMemoryReaderSettingsRepository
+import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderBluetoothState
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderBluetoothAddress
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderConnectionState
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGateway
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayMode
+import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderRuntimePermission
+import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderRuntimeState
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderSettings
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
 import kotlinx.coroutines.CoroutineScope
@@ -54,9 +58,13 @@ class ConfigurableReaderGatewayTest {
             settingsRepository = settingsRepository,
             fakeGateway = fakeGateway,
             realGateway = realGateway,
+            runtimeStateRepository = readyRuntimeStateRepository(),
         )
 
         try {
+            settingsRepository.updateReaderBluetoothAddress(
+                ReaderBluetoothAddress.parse("00:11:22:33:44:55"),
+            )
             settingsRepository.updateGatewayMode(ReaderGatewayMode.RealRp902)
             settle()
             gateway.connect()
@@ -65,6 +73,33 @@ class ConfigurableReaderGatewayTest {
             assertTrue(fakeGateway.disconnectCalled)
             assertTrue(realGateway.connectCalled)
             assertEquals(ReaderConnectionState.Connected, gateway.connectionState.value)
+        } finally {
+            gateway.close()
+        }
+    }
+
+    @Test
+    fun realModeConnectIsBlockedWhenPreflightFails() = runBlocking {
+        val settingsRepository = InMemoryReaderSettingsRepository()
+        val fakeGateway = ManualGateway()
+        val realGateway = ManualGateway()
+        val gateway = configurableGateway(
+            settingsRepository = settingsRepository,
+            fakeGateway = fakeGateway,
+            realGateway = realGateway,
+        )
+
+        try {
+            settingsRepository.updateGatewayMode(ReaderGatewayMode.RealRp902)
+            settle()
+            gateway.connect()
+            settle()
+
+            val state = gateway.connectionState.value
+            assertTrue(state is ReaderConnectionState.Error)
+            assertTrue((state as ReaderConnectionState.Error).message.contains("preflight"))
+            assertTrue(fakeGateway.disconnectCalled)
+            assertEquals(false, realGateway.connectCalled)
         } finally {
             gateway.close()
         }
@@ -98,12 +133,27 @@ class ConfigurableReaderGatewayTest {
         settingsRepository: InMemoryReaderSettingsRepository,
         fakeGateway: ReaderGateway,
         realGateway: ReaderGateway,
+        runtimeStateRepository: InMemoryReaderRuntimeStateRepository =
+            InMemoryReaderRuntimeStateRepository(),
     ): ConfigurableReaderGateway = ConfigurableReaderGateway(
         settingsRepository = settingsRepository,
         fakeGatewayFactory = { fakeGateway },
         realGatewayFactory = { _: ReaderSettings -> realGateway },
+        runtimeStateRepository = runtimeStateRepository,
+        sdkIntProvider = { 35 },
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
     )
+
+    private fun readyRuntimeStateRepository(): InMemoryReaderRuntimeStateRepository =
+        InMemoryReaderRuntimeStateRepository(
+            initialState = ReaderRuntimeState(
+                grantedPermissions = setOf(
+                    ReaderRuntimePermission.BluetoothConnect,
+                    ReaderRuntimePermission.BluetoothScan,
+                ),
+                bluetoothState = ReaderBluetoothState.Enabled,
+            ),
+        )
 
     private suspend fun settle() {
         delay(20L)

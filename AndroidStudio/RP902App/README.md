@@ -32,3 +32,14 @@ The app reads RFID tags from RP902, removes duplicate EPC values inside the curr
 - Use an interface plus fake implementation until actual SDK details are known.
 - Validate final RP902 behavior on a real Android device.
 
+## Vendor SDK Assets
+
+Unitech SDK files are stored under `vendor/unitech/` with separate roles:
+
+- `vendor/unitech/runtime/`: stable build inputs used by `app/build.gradle.kts`.
+- `vendor/unitech/docs/`: Javadoc and vendor reference documents.
+- `vendor/unitech/upstream/`: preserved original SDK distribution for traceability.
+
+The app must only depend on `vendor/unitech/runtime/`. Sample apps, APKs, Xamarin files, Gradle wrappers, and sample signing material remain isolated under `upstream/` and are not part of the app dependency path.
+
+Before updating or redistributing vendor files, confirm the Unitech license terms. For SDK updates, replace the upstream drop, copy only required runtime binaries into `runtime/`, update docs if file names or API findings change, then run build, unit tests, and lint.

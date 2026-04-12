@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+/**
+ * 構造化ログをメモリ上に保持する簡易実装。
+ *
+ * まだ永続化はしないが、`EventLogStore` 契約を挟んでいるため、
+ * 将来ファイル保存や DB 保存へ差し替えるときも UI/Repository の変更を小さくできる。
+ */
 class InMemoryEventLogStore(
     private val maxEntries: Int = DefaultMaxEntries,
 ) : EventLogStore {
@@ -30,11 +36,14 @@ class InMemoryEventLogStore(
             category = category,
             message = message,
         )
+        // 新しいログを先頭に置き、画面で直近イベントを追いやすくする。
+        // maxEntries を超えた古いログは in-memory 実装では保持しない。
         _logs.update { current ->
             (listOf(entry) + current).take(maxEntries)
         }
     }
 
+    /** 現在保持しているログをすべて消す。永続化実装に差し替える場合も同じ契約を保つ。 */
     override suspend fun clear() {
         _logs.value = emptyList()
     }

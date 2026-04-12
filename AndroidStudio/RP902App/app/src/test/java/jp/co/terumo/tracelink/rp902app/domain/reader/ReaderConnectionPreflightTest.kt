@@ -41,6 +41,7 @@ class ReaderConnectionPreflightTest {
 
         assertTrue(state.canAttemptConnection)
         assertEquals(emptyList<ReaderRuntimePermission>(), state.requiredPermissions)
+        assertEquals(emptyList<ReaderPreflightFailure>(), state.failureReasons)
     }
 
     @Test
@@ -62,6 +63,7 @@ class ReaderConnectionPreflightTest {
         assertTrue(state.hasBluetoothAddress)
         assertTrue(state.canAttemptConnection)
         assertEquals(emptyList<ReaderRuntimePermission>(), state.missingPermissions)
+        assertEquals(emptyList<ReaderPreflightFailure>(), state.failureReasons)
     }
 
     @Test
@@ -78,5 +80,36 @@ class ReaderConnectionPreflightTest {
 
         assertFalse(state.hasBluetoothAddress)
         assertFalse(state.canAttemptConnection)
+        assertEquals(
+            listOf(ReaderPreflightFailure.BluetoothAddressMissing),
+            state.failureReasons,
+        )
+    }
+
+    @Test
+    fun evaluate_realModeReportsPermissionAndBluetoothFailures() {
+        val address = ReaderBluetoothAddress.parse("00:11:22:33:44:55")
+        val state = ReaderConnectionPreflight.evaluate(
+            settings = ReaderSettings(
+                gatewayMode = ReaderGatewayMode.RealRp902,
+                readerBluetoothAddress = address,
+            ),
+            sdkInt = 35,
+            grantedPermissions = setOf(ReaderRuntimePermission.BluetoothConnect),
+            bluetoothState = ReaderBluetoothState.Disabled,
+        )
+
+        assertFalse(state.canAttemptConnection)
+        assertEquals(
+            listOf(ReaderRuntimePermission.BluetoothScan),
+            state.missingPermissions,
+        )
+        assertEquals(
+            listOf(
+                ReaderPreflightFailure.RuntimePermissionsMissing,
+                ReaderPreflightFailure.BluetoothDisabled,
+            ),
+            state.failureReasons,
+        )
     }
 }

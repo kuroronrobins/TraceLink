@@ -40,6 +40,12 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.displayText
 import jp.co.terumo.tracelink.rp902app.domain.upload.UploadState
 import jp.co.terumo.tracelink.rp902app.ui.theme.TraceLink_RP902AppTheme
 
+/**
+ * Inventory 画面の route。
+ *
+ * ViewModel から `InventoryUiState` を購読し、画面本体へ state と callback を渡す。
+ * この層で Repository や ReaderGateway を直接呼ばないことが、UDF とテスト容易性を保つ要点。
+ */
 @Composable
 fun InventoryRoute(
     viewModel: InventoryViewModel,
@@ -59,6 +65,12 @@ fun InventoryRoute(
     )
 }
 
+/**
+ * Inventory 画面本体。
+ *
+ * この関数は渡された state を表示し、ボタン操作を callback として返すだけにする。
+ * upload や reader 操作の成否判断をここへ入れると、状態管理が画面に分散して壊れやすくなる。
+ */
 @Composable
 fun InventoryScreen(
     uiState: InventoryUiState,

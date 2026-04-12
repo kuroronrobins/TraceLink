@@ -15,6 +15,9 @@ AndroidStudio/RP902App/.idea/workspace.xml
 AndroidStudio/RP902App/.kotlin/
 AndroidStudio/RP902App/app/build/
 AndroidStudio/RP902App/local.properties
-AndroidStudio/RP902App/vendor/**/keystore/
-AndroidStudio/RP902App/vendor/**/keystore/
+
+# Vendor local staging and sample signing material must not enter app builds.
+AndroidStudio/RP902App/vendor/unitech/incoming/
+AndroidStudio/RP902App/vendor/unitech/tmp/
+AndroidStudio/RP902App/vendor/unitech/upstream/
 AndroidStudio/RP902App/vendor/**/keystore/

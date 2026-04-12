@@ -3,8 +3,11 @@ package jp.co.terumo.tracelink.rp902app.data.inventory
 import jp.co.terumo.tracelink.rp902app.data.log.InMemoryEventLogStore
 import jp.co.terumo.tracelink.rp902app.data.upload.InMemoryUploadRetryQueue
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogCategory
+import jp.co.terumo.tracelink.rp902app.domain.log.AppLogLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderConnectionState
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGateway
+import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEvent
+import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEventLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
 import jp.co.terumo.tracelink.rp902app.domain.upload.InventoryUploadPayload
 import jp.co.terumo.tracelink.rp902app.domain.upload.UploadRepository
@@ -108,6 +111,32 @@ class DefaultInventoryRepositoryTest {
     }
 
     @Test
+    fun readerGatewayEvents_areStoredAsStructuredReaderLogs() = runBlocking {
+        val readerGateway = ManualReaderGateway()
+        val repository = repository(readerGateway = readerGateway)
+
+        try {
+            readerGateway.emitEvent(
+                ReaderGatewayEvent(
+                    level = ReaderGatewayEventLevel.Warning,
+                    message = "Preflight result: blocked",
+                ),
+            )
+            settle()
+
+            assertTrue(
+                repository.state.value.logs.any { log ->
+                    log.category == AppLogCategory.Reader &&
+                        log.level == AppLogLevel.Warning &&
+                        log.message == "Preflight result: blocked"
+                },
+            )
+        } finally {
+            repository.close()
+        }
+    }
+
+    @Test
     fun retryPendingUploads_sendsQueuedPayloadAndClearsQueueOnSuccess() = runBlocking {
         val readerGateway = ManualReaderGateway()
         val uploadRepository = RecordingUploadRepository(
@@ -178,6 +207,9 @@ class DefaultInventoryRepositoryTest {
         private val _tagReads = MutableSharedFlow<ReaderTagRead>(extraBufferCapacity = 16)
         override val tagReads: Flow<ReaderTagRead> = _tagReads.asSharedFlow()
 
+        private val _events = MutableSharedFlow<ReaderGatewayEvent>(extraBufferCapacity = 16)
+        override val events: Flow<ReaderGatewayEvent> = _events.asSharedFlow()
+
         override suspend fun connect() {
             _connectionState.value = ReaderConnectionState.Connected
         }
@@ -197,6 +229,10 @@ class DefaultInventoryRepositoryTest {
                     seenAtEpochMillis = seenAtEpochMillis,
                 ),
             )
+        }
+
+        suspend fun emitEvent(event: ReaderGatewayEvent) {
+            _events.emit(event)
         }
     }
 

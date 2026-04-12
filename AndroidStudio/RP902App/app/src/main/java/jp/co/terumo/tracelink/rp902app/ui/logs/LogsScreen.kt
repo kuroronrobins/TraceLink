@@ -21,6 +21,12 @@ import jp.co.terumo.tracelink.rp902app.domain.log.AppLogEntry
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogLevel
 import jp.co.terumo.tracelink.rp902app.ui.theme.TraceLink_RP902AppTheme
 
+/**
+ * structured log を一覧表示する画面。
+ *
+ * ログ生成は Repository/Gateway が担当し、この Composable は `AppLogEntry` を表示するだけ。
+ * 実機デバッグでは Reader category のログから callback 到達有無を追う。
+ */
 @Composable
 fun LogsScreen(
     logs: List<AppLogEntry>,
