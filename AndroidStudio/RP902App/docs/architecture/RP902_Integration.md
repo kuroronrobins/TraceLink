@@ -85,7 +85,7 @@ The original SDK distribution is preserved separately under `vendor/unitech/upst
 
 No sample source, sample APK, sample signing config, sample keystore, Xamarin project, or upstream Gradle wrapper is used by the app build. The dependency is intentionally local and explicit because the project uses `RepositoriesMode.FAIL_ON_PROJECT_REPOS` and there is no internal artifact repository configured yet.
 
-Current lint output reports that vendor native libraries such as `libJNISTUHFL.so`, `libSTUHFL.so`, and `librfidapi.so` are not 16 KB aligned. This is a vendor SDK compatibility risk for devices that require 16 KB page-size alignment and must be resolved with an updated vendor SDK or a vendor-supported packaging plan before release.
+Current lint output reports that `arm64-v8a/libJNISTUHFL.so` from `vendor/unitech/runtime/unitechRFID_v1.0.41.aar` is not 16 KB aligned. This is a vendor SDK compatibility risk for devices that require 16 KB page-size alignment and must be resolved with an updated vendor SDK or a vendor-supported packaging plan before release. Details are tracked in `docs/maintenance/16kb_alignment_assessment.md`.
 
 ## Reader Settings And Preflight
 
@@ -98,6 +98,8 @@ The app now has app-owned reader settings:
 - `AndroidReaderPermissionMapper`: Android permission string mapping kept outside the domain layer.
 
 The settings screen is a simple in-memory foundation. It can switch between fake and real gateway modes, edit the RP902 Bluetooth MAC address, request runtime permissions, refresh Bluetooth state, and show blocking preflight reasons. Settings and runtime readiness are not durable yet.
+
+For the current one-reader operation, `ReaderSettings` pre-populates the RP902 Bluetooth MAC address with `DC:0D:30:DA:0F:3C`. This reduces setup friction while keeping the Settings field editable for future replacement or multi-reader scenarios. The gateway mode still defaults to fake; the default MAC does not cause real RP902 connection attempts until `Real RP902` is explicitly selected.
 
 For Android 12+ (`sdkInt >= 31`), the app-owned preflight currently requires:
 
@@ -119,7 +121,7 @@ The intended first hardware test flow is:
 
 1. Keep the app in fake mode for normal local operation.
 2. Open Settings and explicitly select `Real RP902`.
-3. Enter a known paired RP902 Bluetooth MAC address.
+3. Confirm the default RP902 Bluetooth MAC address `DC:0D:30:DA:0F:3C`, or edit it if a different paired RP902 is being used.
 4. Tap `Request permissions` if permissions are missing.
 5. Ensure Bluetooth is enabled on the Android device, then tap `Refresh`.
 6. Confirm the preflight status says the real RP902 connection can be attempted.
@@ -267,7 +269,7 @@ The sample also uses Bluetooth enablement checks via `BluetoothAdapter` and cont
 ## Items To Confirm Later
 
 - Runtime permission UX behavior on target hardware and MDM-managed devices.
-- Bluetooth MAC address acquisition, validation, and pairing flow.
+- Bluetooth MAC address acquisition, validation, and pairing flow for any future additional readers. The current one-reader default is `DC:0D:30:DA:0F:3C` and remains editable in Settings.
 - Whether RP902 requires DMService or key mapping service for the intended device fleet.
 - Final mapping from vendor `ConnectState` and `ActionState` to app-owned `ReaderConnectionState` and inventory-running state.
 - Threading requirements for vendor callbacks.
@@ -277,6 +279,8 @@ The sample also uses Bluetooth enablement checks via `BluetoothAdapter` and cont
 - Vendor SDK native library 16 KB page-size alignment support.
 - Durable retry queue storage requirements.
 - Structured log retention and export requirements.
+- Release signing configuration and sample-keystore exclusion are tracked in `docs/maintenance/signing_and_keystore_audit.md`.
+- Current in-memory stores and persistence priorities are tracked in `docs/maintenance/in_memory_inventory.md`.
 
 ## Notes
 

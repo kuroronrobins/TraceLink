@@ -52,7 +52,7 @@ A. real RP902 に接続する前に、MAC address、Android 権限、Bluetooth �
 
 ## Q. Bluetooth MAC はどこで使われますか？
 
-A. Settings で入力され、`ReaderSettings` に保存されます。real mode で connect すると、`RealRp902Gateway` が `TransportBluetooth` を作るときに使います。
+A. Settings で入力され、`ReaderSettings` に保存されます。今回運用では `DC:0D:30:DA:0F:3C` が初期値として入ります。real mode で connect すると、`RealRp902Gateway` が `TransportBluetooth` を作るときに使います。別の RP902 を使う場合は Settings 画面で編集できます。
 
 ## Q. どのファイルから読めばよいですか？
 

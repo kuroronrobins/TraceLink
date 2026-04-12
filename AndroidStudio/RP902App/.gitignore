@@ -19,3 +19,11 @@ local.properties
 /vendor/unitech/incoming/
 /vendor/unitech/tmp/
 /vendor/unitech/upstream/
+
+# Do not allow sample or release signing secrets to drift into app dependencies.
+/vendor/**/keystore/
+**/*.jks
+**/*.keystore
+**/*.p12
+**/*.pfx
+keystore.properties

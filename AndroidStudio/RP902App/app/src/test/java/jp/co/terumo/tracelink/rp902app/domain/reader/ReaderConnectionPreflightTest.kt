@@ -69,7 +69,10 @@ class ReaderConnectionPreflightTest {
     @Test
     fun evaluate_realModeBlocksWhenAddressIsMissing() {
         val state = ReaderConnectionPreflight.evaluate(
-            settings = ReaderSettings(gatewayMode = ReaderGatewayMode.RealRp902),
+            settings = ReaderSettings(
+                gatewayMode = ReaderGatewayMode.RealRp902,
+                readerBluetoothAddress = null,
+            ),
             sdkInt = 35,
             grantedPermissions = setOf(
                 ReaderRuntimePermission.BluetoothConnect,

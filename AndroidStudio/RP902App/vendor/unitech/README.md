@@ -38,4 +38,5 @@ This directory separates the original Unitech SDK drop from the files that the a
 - Do not add sample source, APKs, or Xamarin assets to app dependencies.
 - Do not assume vendor SDK behavior from sample code unless verified against Javadoc or real hardware.
 - Treat `runtime/` as the only supported local dependency boundary until an internal artifact repository is introduced.
-- Lint currently reports 16 KB native library alignment warnings for vendor `.so` files. Confirm vendor support before release.
+- Lint currently reports a 16 KB native library alignment warning for `arm64-v8a/libJNISTUHFL.so` from `runtime/unitechRFID_v1.0.41.aar`. See `../../docs/maintenance/16kb_alignment_assessment.md` and confirm vendor support before release.
+- The sample `UTE_Sample.jks` files under upstream sample projects are not app signing material. See `../../docs/maintenance/signing_and_keystore_audit.md` before changing release signing.

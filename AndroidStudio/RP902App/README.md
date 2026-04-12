@@ -32,6 +32,12 @@ The app reads RFID tags from RP902, removes duplicate EPC values inside the curr
 - Use an interface plus fake implementation until actual SDK details are known.
 - Validate final RP902 behavior on a real Android device.
 
+## Reader Settings
+
+The app still starts in fake reader mode by default. For the current one-reader operation, the RP902 Bluetooth MAC field is prefilled with `DC:0D:30:DA:0F:3C` so hardware testing does not require typing the address every time.
+
+This is only a default value. The Settings screen remains editable, and the MAC address can be changed later if a different RP902 reader is used.
+
 ## Vendor SDK Assets
 
 Unitech SDK files are stored under `vendor/unitech/` with separate roles:
@@ -43,3 +49,12 @@ Unitech SDK files are stored under `vendor/unitech/` with separate roles:
 The app must only depend on `vendor/unitech/runtime/`. Sample apps, APKs, Xamarin files, Gradle wrappers, and sample signing material remain isolated under `upstream/` and are not part of the app dependency path.
 
 Before updating or redistributing vendor files, confirm the Unitech license terms. For SDK updates, replace the upstream drop, copy only required runtime binaries into `runtime/`, update docs if file names or API findings change, then run build, unit tests, and lint.
+
+## Maintenance Notes
+
+Operational risk notes are kept under `docs/maintenance/`.
+
+- `docs/maintenance/16kb_alignment_assessment.md`: current `Aligned16KB` lint warning and vendor native library risk.
+- `docs/maintenance/signing_and_keystore_audit.md`: app signing path and confirmation that sample keystores are not used.
+- `docs/maintenance/in_memory_inventory.md`: in-memory stores that must be revisited before production.
+- `docs/maintenance/runtime_risks_summary.md`: prioritized summary of runtime and release risks.

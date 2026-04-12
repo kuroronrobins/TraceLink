@@ -17,6 +17,7 @@
 - [x] App-owned Bluetooth status preflight foundation implemented
 - [x] Real gateway diagnostic logs added for connect/inventory/disconnect/callback observation
 - [x] Real tag callback mapping guarded against null, blank, oversized, and duplicate-listener edge cases
+- [x] Default RP902 Bluetooth MAC configured as `DC:0D:30:DA:0F:3C` while keeping Settings editable
 - [x] DisplayOutput JNI crash path suppressed inside the real RP902 adapter
 - [x] Real gateway reader commands moved off the UI thread
 - [x] Sample-backed RP902 UHF inventory tuning added before `inventory6c()`
@@ -25,5 +26,6 @@
 - [ ] Vendor license and redistribution terms confirmed
 - [ ] Runtime permission UX validated on target hardware
 - [ ] Bluetooth enablement and pairing flow validated on target hardware
-- [ ] Vendor native library 16 KB page-size alignment resolved or accepted for target devices
+- [ ] Vendor native library 16 KB page-size alignment resolved or accepted for target devices (`docs/maintenance/16kb_alignment_assessment.md`)
+- [x] Sample keystore confirmed outside app signing path (`docs/maintenance/signing_and_keystore_audit.md`)
 - [ ] Real device test completed

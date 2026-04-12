@@ -13,7 +13,8 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderSettingsRepository
  * アプリ全体で使う依存関係を組み立てる手動 DI コンテナ。
  *
  * 現在は小さな実装 slice のため DI framework は導入せず、ここで Repository や Gateway を作る。
- * `ReaderSettings()` の既定値は fake reader なので、実機 RP902 がない環境でも起動とテストができる。
+ * `ReaderSettings()` の既定 gateway mode は fake reader なので、実機 RP902 がない環境でも起動とテストができる。
+ * Bluetooth MAC は今回運用の 1 台固定値で初期化されるが、real 接続は明示選択時だけ行う。
  *
  * 将来、upload 実装、retry queue 永続化、settings 永続化を差し替える場合も、
  * まずこのファイルを見ると app 全体へのつながりを追いやすい。

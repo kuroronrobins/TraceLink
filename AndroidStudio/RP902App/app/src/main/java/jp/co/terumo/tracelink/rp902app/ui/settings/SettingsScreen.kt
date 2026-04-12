@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import jp.co.terumo.tracelink.rp902app.domain.reader.DEFAULT_RP902_BLUETOOTH_ADDRESS
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayMode
 
 /**
@@ -68,7 +69,7 @@ fun SettingsScreen(
             supportingText = {
                 Text(
                     text = uiState.readerAddressError
-                        ?: "Example: 00:11:22:33:44:55",
+                        ?: "Default: $DEFAULT_RP902_BLUETOOTH_ADDRESS. Edit if another reader is used.",
                 )
             },
             keyboardOptions = KeyboardOptions(

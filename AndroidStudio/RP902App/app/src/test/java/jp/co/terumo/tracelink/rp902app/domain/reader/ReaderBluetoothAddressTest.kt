@@ -6,6 +6,12 @@ import org.junit.Test
 
 class ReaderBluetoothAddressTest {
     @Test
+    fun defaultRp902Address_matchesOperationalDefault() {
+        assertEquals(DEFAULT_RP902_BLUETOOTH_ADDRESS, ReaderBluetoothAddress.DefaultRp902.value)
+        assertEquals(DEFAULT_RP902_BLUETOOTH_ADDRESS, ReaderSettings().readerBluetoothAddress?.value)
+    }
+
+    @Test
     fun parse_acceptsColonSeparatedAddressAndNormalizesCase() {
         val address = ReaderBluetoothAddress.parse("00:11:aa:33:44:ff")
 
