@@ -1,0 +1,25 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.unitech.unitechrfidsample.MainActivity">
+    <item
+        android:id="@+id/action_findDevice"
+        android:orderInCategory="100"
+        android:title="@string/findDevice"
+        app:showAsAction="never" />
+  <item
+        android:id="@+id/action_readMode"
+        android:orderInCategory="100"
+        android:title="@string/changeReadMode"
+        app:showAsAction="never" />
+  <item
+        android:id="@+id/action_operatingMode"
+        android:orderInCategory="100"
+        android:title="@string/changeOperatingMode"
+        app:showAsAction="never" />
+  <item
+        android:id="@+id/action_factoryReset"
+        android:orderInCategory="100"
+        android:title="@string/factoryReset"
+        app:showAsAction="never" />
+</menu>

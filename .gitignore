@@ -9,3 +9,9 @@ dist/
 venv/
 
 _tmp_*/
+
+AndroidStudio/RP902App/.gradle/
+AndroidStudio/RP902App/.idea/workspace.xml
+AndroidStudio/RP902App/.kotlin/
+AndroidStudio/RP902App/app/build/
+AndroidStudio/RP902App/local.properties

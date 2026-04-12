@@ -8,4 +8,3 @@ sealed interface UploadResult {
     data object Success : UploadResult
     data class Failure(val message: String) : UploadResult
 }
-

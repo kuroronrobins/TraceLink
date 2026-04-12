@@ -16,16 +16,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,8 +32,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import jp.co.terumo.tracelink.rp902app.domain.inventory.InventoryTag
+import jp.co.terumo.tracelink.rp902app.domain.log.AppLogCategory
+import jp.co.terumo.tracelink.rp902app.domain.log.AppLogEntry
+import jp.co.terumo.tracelink.rp902app.domain.log.AppLogLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderConnectionState
 import jp.co.terumo.tracelink.rp902app.domain.reader.displayText
+import jp.co.terumo.tracelink.rp902app.domain.upload.UploadState
 import jp.co.terumo.tracelink.rp902app.ui.theme.TraceLink_RP902AppTheme
 
 @Composable
@@ -52,12 +53,12 @@ fun InventoryRoute(
         onStartInventory = viewModel::startInventory,
         onStopInventory = viewModel::stopInventory,
         onUpload = viewModel::uploadSession,
+        onRetryPendingUploads = viewModel::retryPendingUploads,
         onClearSession = viewModel::clearSession,
         modifier = modifier,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InventoryScreen(
     uiState: InventoryUiState,
@@ -66,68 +67,52 @@ fun InventoryScreen(
     onStartInventory: () -> Unit,
     onStopInventory: () -> Unit,
     onUpload: () -> Unit,
+    onRetryPendingUploads: () -> Unit,
     onClearSession: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("TraceLink RP902")
-                        Text(
-                            text = "Inventory session",
-                            style = MaterialTheme.typography.labelMedium,
-                        )
-                    }
-                },
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        item {
+            StatusSection(uiState = uiState)
+        }
+        item {
+            ActionSection(
+                uiState = uiState,
+                onConnect = onConnect,
+                onDisconnect = onDisconnect,
+                onStartInventory = onStartInventory,
+                onStopInventory = onStopInventory,
+                onUpload = onUpload,
+                onRetryPendingUploads = onRetryPendingUploads,
+                onClearSession = onClearSession,
             )
-        },
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-        ) {
+        }
+        item {
+            SectionTitle("Tags")
+        }
+        if (uiState.tags.isEmpty()) {
             item {
-                StatusSection(uiState = uiState)
+                EmptyState()
             }
-            item {
-                ActionSection(
-                    uiState = uiState,
-                    onConnect = onConnect,
-                    onDisconnect = onDisconnect,
-                    onStartInventory = onStartInventory,
-                    onStopInventory = onStopInventory,
-                    onUpload = onUpload,
-                    onClearSession = onClearSession,
-                )
+        } else {
+            items(
+                items = uiState.tags,
+                key = { tag -> tag.epc },
+            ) { tag ->
+                TagRow(tag = tag)
             }
-            item {
-                SectionTitle("Tags")
-            }
-            if (uiState.tags.isEmpty()) {
-                item {
-                    EmptyState()
-                }
-            } else {
-                items(
-                    items = uiState.tags,
-                    key = { tag -> tag.epc },
-                ) { tag ->
-                    TagRow(tag = tag)
-                }
-            }
-            item {
-                SectionTitle("Event log")
-            }
-            items(uiState.logs) { log ->
-                LogRow(log = log)
-            }
+        }
+        item {
+            SectionTitle("Recent log")
+        }
+        items(uiState.logs.take(8)) { log ->
+            LogRow(log = log)
         }
     }
 }
@@ -161,6 +146,15 @@ private fun StatusSection(uiState: InventoryUiState) {
                 value = uiState.uploadState.displayText(),
                 color = uploadColor(uiState.uploadState),
             )
+            StatusPill(
+                label = "Queued",
+                value = uiState.pendingUploadCount.toString(),
+                color = if (uiState.pendingUploadCount > 0) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.outline
+                },
+            )
         }
     }
 }
@@ -174,6 +168,7 @@ private fun ActionSection(
     onStartInventory: () -> Unit,
     onStopInventory: () -> Unit,
     onUpload: () -> Unit,
+    onRetryPendingUploads: () -> Unit,
     onClearSession: () -> Unit,
 ) {
     val connected = uiState.connectionState == ReaderConnectionState.Connected
@@ -211,6 +206,11 @@ private fun ActionSection(
                 text = "Upload",
                 enabled = uiState.tags.isNotEmpty() && !uploading,
                 onClick = onUpload,
+            )
+            ActionButton(
+                text = "Retry",
+                enabled = uiState.pendingUploadCount > 0 && !uploading,
+                onClick = onRetryPendingUploads,
             )
             ActionButton(
                 text = "Clear",
@@ -342,9 +342,9 @@ private fun EmptyState() {
 }
 
 @Composable
-private fun LogRow(log: String) {
+private fun LogRow(log: AppLogEntry) {
     Text(
-        text = log,
+        text = log.displayText(),
         modifier = Modifier.fillMaxWidth(),
         style = MaterialTheme.typography.bodySmall,
         fontFamily = FontFamily.Monospace,
@@ -379,6 +379,22 @@ private fun uploadColor(uploadState: UploadState): Color = when (uploadState) {
     is UploadState.Failed -> MaterialTheme.colorScheme.error
 }
 
+private fun AppLogEntry.displayText(): String =
+    "$occurredAtEpochMillis  ${level.displayText()} ${category.displayText()}: $message"
+
+private fun AppLogLevel.displayText(): String = when (this) {
+    AppLogLevel.Info -> "INFO"
+    AppLogLevel.Warning -> "WARN"
+    AppLogLevel.Error -> "ERROR"
+}
+
+private fun AppLogCategory.displayText(): String = when (this) {
+    AppLogCategory.System -> "SYSTEM"
+    AppLogCategory.Reader -> "READER"
+    AppLogCategory.Inventory -> "INVENTORY"
+    AppLogCategory.Upload -> "UPLOAD"
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun InventoryScreenPreview() {
@@ -394,13 +410,22 @@ private fun InventoryScreenPreview() {
                         readCount = 2,
                     ),
                 ),
-                logs = listOf("1000  Session initialized."),
+                logs = listOf(
+                    AppLogEntry(
+                        id = 1L,
+                        occurredAtEpochMillis = 1000L,
+                        level = AppLogLevel.Info,
+                        category = AppLogCategory.System,
+                        message = "Session initialized.",
+                    ),
+                ),
             ),
             onConnect = {},
             onDisconnect = {},
             onStartInventory = {},
             onStopInventory = {},
             onUpload = {},
+            onRetryPendingUploads = {},
             onClearSession = {},
         )
     }

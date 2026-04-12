@@ -36,12 +36,43 @@ class InventorySessionTest {
     }
 
     @Test
+    fun record_normalizesEpcWhitespaceAndCaseBeforeFiltering() {
+        val session = InventorySession()
+
+        session.record(ReaderTagRead(epc = " e2806894000040035a1f90a1 ", seenAtEpochMillis = 1000L))
+        val tags = session.record(
+            ReaderTagRead(epc = "E2806894000040035A1F90A1", seenAtEpochMillis = 2000L),
+        )
+
+        assertEquals(1, tags.size)
+        assertEquals("E2806894000040035A1F90A1", tags.single().epc)
+        assertEquals(2, tags.single().readCount)
+    }
+
+    @Test
     fun record_rejectsBlankEpc() {
         val session = InventorySession()
 
         assertThrows(IllegalArgumentException::class.java) {
             session.record(ReaderTagRead(epc = "   ", seenAtEpochMillis = 1000L))
         }
+    }
+
+    @Test
+    fun clear_resetsDuplicateFilteringForNextSession() {
+        val session = InventorySession()
+
+        session.record(ReaderTagRead(epc = "E2806894000040035A1F90A1", seenAtEpochMillis = 1000L))
+        session.record(ReaderTagRead(epc = "E2806894000040035A1F90A1", seenAtEpochMillis = 2000L))
+        session.clear()
+        val tags = session.record(
+            ReaderTagRead(epc = "E2806894000040035A1F90A1", seenAtEpochMillis = 3000L),
+        )
+
+        assertEquals(1, tags.size)
+        assertEquals(3000L, tags.single().firstSeenAtEpochMillis)
+        assertEquals(3000L, tags.single().lastSeenAtEpochMillis)
+        assertEquals(1, tags.single().readCount)
     }
 
     @Test
