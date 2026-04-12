@@ -1,0 +1,14 @@
+model = "gpt-5-codex"
+
+[approval_policy]
+mode = "on-request"
+
+[sandbox]
+mode = "workspace-write"
+
+[tools]
+web_search = true
+
+[project]
+name = "tracelink-rp902-app"
+
