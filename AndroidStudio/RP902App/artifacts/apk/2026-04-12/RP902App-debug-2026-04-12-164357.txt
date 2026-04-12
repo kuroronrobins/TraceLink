@@ -1,0 +1,8 @@
+﻿Build date       : 2026-04-12-164357
+Build type       : debug
+Label            : 
+Project root     : C:\Users\kuroron\Documents\RD\20260405_RFIDXcconnect\AndroidStudio\RP902App
+Source APK       : C:\Users\kuroron\Documents\RD\20260405_RFIDXcconnect\AndroidStudio\RP902App\app\build\outputs\apk\debug\app-debug.apk
+Archived APK     : C:\Users\kuroron\Documents\RD\20260405_RFIDXcconnect\AndroidStudio\RP902App\artifacts\apk\2026-04-12\RP902App-debug-2026-04-12-164357.apk
+Git commit       : d0fb2af
+SHA256           : E754DAD1333466414BD06FD699F8F9653D4AF6B22ECDC53867184F3D50C37961
