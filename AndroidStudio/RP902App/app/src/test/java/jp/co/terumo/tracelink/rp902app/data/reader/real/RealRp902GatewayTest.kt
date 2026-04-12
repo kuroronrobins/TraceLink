@@ -8,22 +8,19 @@ import org.junit.Test
 
 class RealRp902GatewayTest {
     @Test
-    fun connect_reportsNotEnabledWithoutUsingVendorSdk() = runBlocking {
+    fun connect_reportsMissingAddressBeforeUsingVendorSdk() = runBlocking {
         val gateway = RealRp902Gateway()
 
         gateway.connect()
 
         val state = gateway.connectionState.value
         assertTrue(state is ReaderConnectionState.Error)
-        assertTrue((state as ReaderConnectionState.Error).message.contains("not enabled"))
-        assertTrue(state.message.contains("Bluetooth address is not configured"))
+        assertTrue((state as ReaderConnectionState.Error).message.contains("Bluetooth address"))
     }
 
     @Test
     fun disconnect_resetsStateToDisconnected() = runBlocking {
-        val gateway = RealRp902Gateway(
-            RealRp902GatewayConfiguration(bluetoothAddress = "00:11:22:33:44:55"),
-        )
+        val gateway = RealRp902Gateway()
 
         gateway.connect()
         gateway.disconnect()
@@ -33,14 +30,12 @@ class RealRp902GatewayTest {
 
     @Test
     fun startInventory_reportsAdapterBoundaryUntilRealSdkIsWired() = runBlocking {
-        val gateway = RealRp902Gateway(
-            RealRp902GatewayConfiguration(bluetoothAddress = "00:11:22:33:44:55"),
-        )
+        val gateway = RealRp902Gateway()
 
         gateway.startInventory()
 
         val state = gateway.connectionState.value
         assertTrue(state is ReaderConnectionState.Error)
-        assertTrue((state as ReaderConnectionState.Error).message.contains("start inventory"))
+        assertTrue((state as ReaderConnectionState.Error).message.contains("Connect RP902"))
     }
 }

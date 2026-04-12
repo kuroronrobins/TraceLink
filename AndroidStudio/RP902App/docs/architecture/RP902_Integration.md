@@ -35,14 +35,51 @@ The ViewModel exposes UI state as a projection of repository state. Composables 
 
 ## Current Stage
 
-The app still defaults to `FakeReaderGateway`. `RealRp902Gateway` exists only as an adapter boundary and does not import or call the vendor SDK yet. It implements `ReaderGateway` and reports a not-enabled reader error until SDK dependencies, runtime permissions, Bluetooth address handling, and callback mapping are configured.
+The app still defaults to `FakeReaderGateway`. The Unitech AAR/JAR are now added to the app as local file dependencies so `RealRp902Gateway` can compile against confirmed vendor types. The real gateway remains behind the app-owned `ReaderGateway` contract and is only selected when reader settings are changed from fake to real.
 
 `AppContainer` is the switch point:
 
 - `ReaderGatewayMode.Fake`: default, local development path.
-- `ReaderGatewayMode.RealRp902`: explicit opt-in placeholder for future real-device wiring.
+- `ReaderGatewayMode.RealRp902`: explicit opt-in path for hardware preparation.
 
-No vendor AAR/JAR dependency has been added to the app module in this step.
+`ConfigurableReaderGateway` listens to app-owned reader settings and swaps the active gateway between fake and real implementations. Switching modes disconnects the previous gateway first. This keeps composables and ViewModels free from vendor SDK calls.
+
+The current real gateway uses only confirmed vendor API entry points:
+
+- `TransportBluetooth(DeviceType.RP902, "RP902", bluetoothMacAddress)`.
+- `RP902Reader(transport)`.
+- `reader.addListener(IReaderEventListener)`.
+- `reader.connect()`.
+- `reader.disconnect()`.
+- `reader.clearListener()`.
+- `reader.getRfidUhf().addListener(IRfidUhfEventListener)`.
+- `reader.getRfidUhf().inventory6c()`.
+- `reader.getRfidUhf().stop()`.
+- `reader.getRfidUhf().removeListener(...)`.
+
+The real path still requires runtime permission handling, Bluetooth enablement checks, final inventory tuning, and hardware validation before it should be used in production.
+
+## Vendor Dependency Wiring
+
+The app module references the checked-in vendor files directly:
+
+- `vendor/unitech/Unitech_RFID_SDK_Android_V1_0_41/1.0.41/Binary/unitechRFID_v1.0.41.aar`.
+- `vendor/unitech/Unitech_RFID_SDK_Android_V1_0_41/1.0.41/Source/AndroidStudio/unitechRFIDSample/app/libs/UnitechSDK_1.2.19.jar`.
+
+No sample signing config or sample keystore is used. The dependency is intentionally local and explicit because the project uses `RepositoriesMode.FAIL_ON_PROJECT_REPOS` and there is no internal artifact repository configured yet.
+
+Current lint output reports that vendor native libraries such as `libJNISTUHFL.so`, `libSTUHFL.so`, and `librfidapi.so` are not 16 KB aligned. This is a vendor SDK compatibility risk for devices that require 16 KB page-size alignment and must be resolved with an updated vendor SDK or a vendor-supported packaging plan before release.
+
+## Reader Settings And Preflight
+
+The app now has app-owned reader settings:
+
+- `ReaderSettings`: selected gateway mode and optional normalized Bluetooth MAC address.
+- `ReaderBluetoothAddress`: pure parser/normalizer for `00:11:22:33:44:55` and `001122334455` formats.
+- `ReaderConnectionPreflight`: pure helper for required runtime permissions and connection readiness checks.
+- `AndroidReaderPermissionMapper`: Android permission string mapping kept outside the domain layer.
+
+The settings screen is a simple in-memory foundation. It can switch between fake and real gateway modes and edit the RP902 Bluetooth MAC address. Settings are not durable yet.
 
 ## Confirmed Vendor SDK Surface
 
@@ -109,19 +146,26 @@ The bundled sample manifest declares:
 - `android.permission.BLUETOOTH_ADMIN`.
 - `android.permission.INJECT_EVENTS`.
 
-The current app manifest is intentionally not changed yet because the default path is still fake and target SDK is 35. Before enabling the real gateway, confirm the Android 12+ Bluetooth permission set for the target device, likely including `BLUETOOTH_CONNECT` and `BLUETOOTH_SCAN`, and decide whether location permission remains required by the SDK or scan path.
+The current app manifest declares the preparation permissions while the default path remains fake:
+
+- `BLUETOOTH` and `BLUETOOTH_ADMIN` with `maxSdkVersion="30"`.
+- `BLUETOOTH_CONNECT`.
+- `BLUETOOTH_SCAN`.
+- `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` with `maxSdkVersion="30"`.
+
+Before enabling the real gateway for production, confirm the Android 12+ Bluetooth permission set for the target device and decide whether location permission remains required by the SDK or scan path.
 
 The sample also uses Bluetooth enablement checks via `BluetoothAdapter` and contains key mapping / scan service calls such as `KeymappingCtrl` and `unitech.scanservice.software_scankey`. Vendor binaries include DMService APKs, but the sample manifest and Javadocs reviewed here do not prove whether DMService is required for the RP902 inventory path. Treat DMService and key mapping as device-environment dependencies to confirm on hardware.
 
 ## Items To Confirm Later
 
-- Exact app dependency wiring for `unitechRFID_v1.0.41.aar` and `UnitechSDK_1.2.19.jar`.
-- Whether the app should vendor-copy binaries, reference checked-in local files, or use an internal artifact repository.
 - Runtime permission UX for target SDK 35.
 - Bluetooth MAC address acquisition, validation, and pairing flow.
 - Whether RP902 requires DMService or key mapping service for the intended device fleet.
 - Final mapping from vendor `ConnectState` and `ActionState` to app-owned `ReaderConnectionState` and inventory-running state.
 - Threading requirements for vendor callbacks.
+- Whether local vendor file dependencies should be replaced with an internal artifact repository before CI/release hardening.
+- Vendor SDK native library 16 KB page-size alignment support.
 - Durable retry queue storage requirements.
 - Structured log retention and export requirements.
 

@@ -10,6 +10,8 @@ import jp.co.terumo.tracelink.rp902app.ui.app.Rp902App
 import jp.co.terumo.tracelink.rp902app.ui.theme.TraceLink_RP902AppTheme
 import jp.co.terumo.tracelink.rp902app.ui.inventory.InventoryViewModel
 import jp.co.terumo.tracelink.rp902app.ui.inventory.InventoryViewModelFactory
+import jp.co.terumo.tracelink.rp902app.ui.settings.SettingsViewModel
+import jp.co.terumo.tracelink.rp902app.ui.settings.SettingsViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,9 +22,16 @@ class MainActivity : ComponentActivity() {
             this,
             InventoryViewModelFactory(appContainer.inventoryRepository()),
         )[InventoryViewModel::class.java]
+        val settingsViewModel = ViewModelProvider(
+            this,
+            SettingsViewModelFactory(appContainer.readerSettingsRepository()),
+        )[SettingsViewModel::class.java]
         setContent {
             TraceLink_RP902AppTheme {
-                Rp902App(inventoryViewModel = inventoryViewModel)
+                Rp902App(
+                    inventoryViewModel = inventoryViewModel,
+                    settingsViewModel = settingsViewModel,
+                )
             }
         }
     }

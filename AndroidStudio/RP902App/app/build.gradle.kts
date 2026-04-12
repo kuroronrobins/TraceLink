@@ -3,6 +3,14 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val unitechSdkRoot = rootProject.file(
+    "vendor/unitech/Unitech_RFID_SDK_Android_V1_0_41/1.0.41",
+)
+val unitechRfidAar = unitechSdkRoot.resolve("Binary/unitechRFID_v1.0.41.aar")
+val unitechDeviceSdkJar = unitechSdkRoot.resolve(
+    "Source/AndroidStudio/unitechRFIDSample/app/libs/UnitechSDK_1.2.19.jar",
+)
+
 android {
     namespace = "jp.co.terumo.tracelink.rp902app"
     compileSdk = 35
@@ -48,6 +56,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(files(unitechRfidAar, unitechDeviceSdkJar))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

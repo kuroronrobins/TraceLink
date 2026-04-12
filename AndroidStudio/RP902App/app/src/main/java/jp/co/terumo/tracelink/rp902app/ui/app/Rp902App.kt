@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import jp.co.terumo.tracelink.rp902app.ui.inventory.InventoryScreen
 import jp.co.terumo.tracelink.rp902app.ui.inventory.InventoryViewModel
 import jp.co.terumo.tracelink.rp902app.ui.logs.LogsScreen
+import jp.co.terumo.tracelink.rp902app.ui.settings.SettingsScreen
+import jp.co.terumo.tracelink.rp902app.ui.settings.SettingsViewModel
 
 private enum class AppRoute(
     val label: String,
@@ -32,15 +34,21 @@ private enum class AppRoute(
         label = "Logs",
         title = "Event log",
     ),
+    Settings(
+        label = "Settings",
+        title = "Reader settings",
+    ),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Rp902App(
     inventoryViewModel: InventoryViewModel,
+    settingsViewModel: SettingsViewModel,
     modifier: Modifier = Modifier,
 ) {
     val uiState by inventoryViewModel.uiState.collectAsState()
+    val settingsUiState by settingsViewModel.uiState.collectAsState()
     var selectedRouteName by rememberSaveable { mutableStateOf(AppRoute.Inventory.name) }
     val selectedRoute = AppRoute.valueOf(selectedRouteName)
 
@@ -87,6 +95,13 @@ fun Rp902App(
 
             AppRoute.Logs -> LogsScreen(
                 logs = uiState.logs,
+                modifier = Modifier.padding(innerPadding),
+            )
+
+            AppRoute.Settings -> SettingsScreen(
+                uiState = settingsUiState,
+                onGatewayModeChange = settingsViewModel::updateGatewayMode,
+                onReaderAddressChange = settingsViewModel::updateReaderAddressInput,
                 modifier = Modifier.padding(innerPadding),
             )
         }
