@@ -30,6 +30,11 @@
 - `registeredAtEpochMillis`
 - `deviceId`
 - `readerType`
+- `workId`
+- `reportId`
+- `operatorId`
+- `ruleVersion`
+- `equipmentSnapshotVersion`
 - `tags`
 
 tag fields:
@@ -38,12 +43,17 @@ tag fields:
 - `firstSeenAtEpochMillis`
 - `lastSeenAtEpochMillis`
 - `readCount`
+- `judgementStatus`
+- `judgementReasonCode`
 
-端末内判定の本実装後は、判定結果、理由コード、rule/master snapshot version を bundle に追加する。
+`JdbcPostgresGateway` はこの bundle を JSONB 文字列へ変換し、registration function の単一引数として渡す。
+最終的な JSON schema と function 戻り値は PostgreSQL 側契約と合わせて固定する。
 
 ## Pending Write
 
-PostgreSQL function 呼び出しに失敗した non-empty bundle は `PendingWriteQueue` に残す。現在は in-memory 実装だが、本番前に durable storage へ差し替える。
+PostgreSQL function 呼び出しに失敗した non-empty bundle は、retryable failure の場合だけ `PendingWriteQueue` に残す。
+configuration failure や contract/schema failure は、同じ bundle を再送しても成功しない可能性が高いため queue へ積まない。
+現在は in-memory 実装だが、本番前に durable storage へ差し替える。
 
 pending write の重複キーは現時点では `sessionId` とする。最終的な冪等性キーは PostgreSQL function 契約と合わせて確定する。
 
@@ -57,4 +67,8 @@ pending write の重複キーは現時点では `sessionId` とする。最終�
 
 ## Current Status
 
-実 PostgreSQL 接続は未実装。現在は `ReadResultRepository` と `FakeReadResultRepository` で差し替え点を確保している。
+`JdbcPostgresGateway` による PostgreSQL access layer を追加済み。
+アプリの default は fake mode のままで、`AppContainer` に `DataAccessMode.Postgres` と `PostgresConnectionSettings` を渡した場合だけ PostgreSQL mode を組み立てる。
+
+実 DB への live 接続テストはこの段階では行っていない。
+View / Function 名、row column、registration JSON schema は `data.postgres` 配下に集約しているが、DB 側契約の最終確定が必要。

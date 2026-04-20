@@ -12,5 +12,15 @@ interface ReadResultRepository {
 
 sealed interface ReadResultRegistrationResult {
     data object Success : ReadResultRegistrationResult
-    data class Failure(val message: String) : ReadResultRegistrationResult
+    data class Failure(
+        val message: String,
+        val kind: RegistrationFailureKind = RegistrationFailureKind.Retryable,
+    ) : ReadResultRegistrationResult
+}
+
+enum class RegistrationFailureKind {
+    Retryable,
+    Configuration,
+    Contract,
+    Unknown,
 }

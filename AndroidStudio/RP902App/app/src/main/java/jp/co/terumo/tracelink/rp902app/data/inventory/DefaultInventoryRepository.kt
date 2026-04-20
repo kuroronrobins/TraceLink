@@ -26,6 +26,8 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEventLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
 import jp.co.terumo.tracelink.rp902app.domain.reader.displayText
 import jp.co.terumo.tracelink.rp902app.domain.readresult.PendingWriteQueue
+import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationEnvironment
+import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationFailureKind
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultBundleFactory
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationResult
@@ -63,8 +65,7 @@ class DefaultInventoryRepository(
     private val pendingWriteQueue: PendingWriteQueue = InMemoryPendingWriteQueue(),
     private val eventLogStore: EventLogStore = InMemoryEventLogStore(),
     private val inventorySession: InventorySession = InventorySession(),
-    private val deviceId: String = "android-local-device",
-    private val readerType: String = "RP902",
+    private val registrationEnvironment: RegistrationEnvironment = RegistrationEnvironment(),
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val sessionIdFactory: () -> String = { UUID.randomUUID().toString() },
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
@@ -336,8 +337,8 @@ class DefaultInventoryRepository(
         readResultBundleFactory.create(
             sessionId = sessionIdFactory(),
             registeredAtEpochMillis = clock(),
-            deviceId = deviceId,
-            readerType = readerType,
+            deviceId = registrationEnvironment.deviceId,
+            readerType = registrationEnvironment.readerType,
             workContext = workContext,
             ruleBundle = ruleBundle,
             equipmentSnapshot = equipmentSnapshot,
@@ -385,7 +386,8 @@ class DefaultInventoryRepository(
             }
 
             is ReadResultRegistrationResult.Failure -> {
-                if (queueOnFailure) {
+                val shouldQueue = queueOnFailure && result.kind == RegistrationFailureKind.Retryable
+                if (shouldQueue) {
                     pendingWriteQueue.enqueueFailure(
                         bundle = bundle,
                         failedAtEpochMillis = clock(),
@@ -398,7 +400,11 @@ class DefaultInventoryRepository(
                 appendLog(
                     level = AppLogLevel.Warning,
                     category = AppLogCategory.ResultRegistration,
-                    message = "Result registration failed and queued: ${result.message}",
+                    message = if (shouldQueue) {
+                        "Result registration failed and queued: ${result.message}"
+                    } else {
+                        "Result registration failed without queue: ${result.message}"
+                    },
                 )
             }
         }

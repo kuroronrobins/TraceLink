@@ -34,7 +34,7 @@ The implementation remains in the single `:app` module and separates packages by
 - `data/equipment`: fake equipment master repository.
 - `data/judgement`: minimal local judgement implementation.
 - `data/readresult`: read result bundle factory, fake read result repository, and in-memory pending write queue.
-- `data/postgres`: repository adapters that delegate to `PostgresGateway`.
+- `data/postgres`: JDBC `PostgresGateway`, View / Function names, row mappers, JSONB argument conversion, error mapping, and repository adapters.
 - `data/log`: in-memory event log store.
 - `ui/app`: app shell and route selection.
 - `ui/inventory`: inventory screen state projection and Compose UI.
@@ -47,6 +47,12 @@ The ViewModel exposes UI state as a projection of repository state. Composables 
 ## Current Stage
 
 The app still defaults to `FakeReaderGateway`. The Unitech AAR/JAR are added to the app as local file dependencies so `RealRp902Gateway` can compile against confirmed vendor types. The real gateway remains behind the app-owned `ReaderGateway` contract and is only selected when reader settings are changed from fake to real.
+
+Data access also defaults to fake mode. `AppContainer` can be constructed with `DataAccessMode.Postgres` and `PostgresConnectionSettings` to wire `PostgresWorkContextRepository`, `PostgresRuleRepository`, `PostgresEquipmentMasterRepository`, and `PostgresReadResultRepository` to `JdbcPostgresGateway`.
+
+`JdbcPostgresGateway` uses pgJDBC and opens a short-lived JDBC connection per operation on `Dispatchers.IO`. SQL text, schema names, function names, row mapping, JSONB registration payload conversion, and PostgreSQL error classification stay inside `data.postgres`. UI, ViewModel, `DefaultInventoryRepository`, `InventorySession`, and `ReadJudgementService` do not contain SQL or table names.
+
+The PostgreSQL path has compile, unit-test, and debug APK build coverage. A live DB smoke test is still required after the View / Function contract and credentials are supplied.
 
 `AppContainer` is the switch point:
 
@@ -118,7 +124,8 @@ This should be removed or revisited if Unitech provides an SDK where the vendor 
 - Whether RP902 requires DMService or key mapping service for the intended device fleet.
 - Threading requirements for vendor callbacks.
 - Whether Unitech has a fixed RP902 SDK/FW for the `DisplayOutput.parameter` CheckJNI abort.
-- PostgreSQL View / Function names for work context, rule bundle, equipment snapshot, read result registration, and final result view.
+- PostgreSQL View / Function names and row contracts for work context, rule bundle, equipment snapshot, read result registration, and final result view.
+- SSL mode, server certificate provisioning, credential storage, and network policy for managed Android devices.
 - Durable pending write storage requirements.
 - Structured log retention and export requirements.
 

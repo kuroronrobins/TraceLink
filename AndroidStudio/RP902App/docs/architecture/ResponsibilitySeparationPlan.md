@@ -41,20 +41,20 @@ flowchart TB
 | `ReadResultBundleFactory` | 判定済み session snapshot を登録 bundle に変換する | `DefaultReadResultBundleFactory` を追加 |
 | `ReadResultRepository` | 判定済み読取結果を PostgreSQL function へ登録する | rename 済み |
 | `PendingWriteQueue` | 登録失敗 bundle を保留し再実行する | rename 済み |
-| `PostgresGateway` | View / Function 呼び出しの低レベル境界 | contract と repository adapter を追加 |
+| `PostgresGateway` | View / Function 呼び出しの低レベル境界 | `JdbcPostgresGateway`、設定、mapper、error mapper、repository adapter を追加 |
 | `EventLogStore` | 構造化ログの保持 | 既存契約を維持 |
 
 ## 次段階で分割する順番
 
-1. 実 `PostgresGateway` を追加し、View / Function 境界だけを呼び出す。
-2. `AppContainer` で fake repository から `data.postgres` adapter へ差し替える。
+1. PostgreSQL 側の View / Function row contract と JSON schema を確定する。
+2. 実 DB smoke test 用の接続設定注入方法を決める。
 3. 帳票別ルールを `SimpleReadJudgementService` から専用判定実装へ置き換える。
 4. `PendingWriteQueue` を Room などへ差し替え、登録失敗 bundle を再起動後も保持する。
 5. `InventorySession` の責務名が読取 session accumulation として固まったら、`ReadSessionAccumulator` への rename を検討する。
 
 ## 今回見送ること
 
-- PostgreSQL 実接続コードの実装。
-- SQL / View / Function の具体名確定。
+- live PostgreSQL 環境での接続検証。
+- SQL / View / Function の最終名確定。
 - `InventorySession` の rename。
 - 帳票別の端末内判定ルール本実装。

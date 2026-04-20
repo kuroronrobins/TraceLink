@@ -13,6 +13,7 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRepository
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationResult
+import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationFailureKind
 import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationState
 import jp.co.terumo.tracelink.rp902app.domain.work.WorkContext
 import jp.co.terumo.tracelink.rp902app.domain.work.WorkContextRepository
@@ -145,6 +146,40 @@ class DefaultInventoryRepositoryTest {
             )
             assertEquals(emptyList<Any>(), state.pendingWrites)
             assertEquals(emptyList<Any>(), readResultRepository.bundles)
+        } finally {
+            repository.close()
+        }
+    }
+
+    @Test
+    fun nonRetryableRegistrationFailure_setsFailedStateWithoutPendingWrite() = runBlocking {
+        val readerGateway = ManualReaderGateway()
+        val readResultRepository = RecordingReadResultRepository(
+            results = mutableListOf(
+                ReadResultRegistrationResult.Failure(
+                    message = "schema mismatch",
+                    kind = RegistrationFailureKind.Contract,
+                ),
+            ),
+        )
+        val repository = repository(
+            readerGateway = readerGateway,
+            readResultRepository = readResultRepository,
+        )
+
+        try {
+            readerGateway.emitTag("E2806894000040035A1F90A1", 1000L)
+            settle()
+
+            repository.registerCurrentSessionResults()
+            settle()
+
+            val state = repository.state.value
+            val registrationState = state.registrationState
+
+            assertTrue(registrationState is RegistrationState.Failed)
+            assertEquals("schema mismatch", (registrationState as RegistrationState.Failed).message)
+            assertEquals(emptyList<Any>(), state.pendingWrites)
         } finally {
             repository.close()
         }

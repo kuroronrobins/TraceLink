@@ -4,6 +4,12 @@ import jp.co.terumo.tracelink.rp902app.data.equipment.FakeEquipmentMasterReposit
 import jp.co.terumo.tracelink.rp902app.data.inventory.DefaultInventoryRepository
 import jp.co.terumo.tracelink.rp902app.data.judgement.SimpleReadJudgementService
 import jp.co.terumo.tracelink.rp902app.data.log.InMemoryEventLogStore
+import jp.co.terumo.tracelink.rp902app.data.postgres.JdbcPostgresGateway
+import jp.co.terumo.tracelink.rp902app.data.postgres.PostgresConnectionSettings
+import jp.co.terumo.tracelink.rp902app.data.postgres.PostgresEquipmentMasterRepository
+import jp.co.terumo.tracelink.rp902app.data.postgres.PostgresReadResultRepository
+import jp.co.terumo.tracelink.rp902app.data.postgres.PostgresRuleRepository
+import jp.co.terumo.tracelink.rp902app.data.postgres.PostgresWorkContextRepository
 import jp.co.terumo.tracelink.rp902app.data.reader.ConfigurableReaderGateway
 import jp.co.terumo.tracelink.rp902app.data.reader.bluetooth.InMemoryReaderRuntimeStateRepository
 import jp.co.terumo.tracelink.rp902app.data.readresult.DefaultReadResultBundleFactory
@@ -20,6 +26,7 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderRuntimeStateRepositor
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderSettings
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderSettingsRepository
 import jp.co.terumo.tracelink.rp902app.domain.readresult.PendingWriteQueue
+import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationEnvironment
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultBundleFactory
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRepository
 import jp.co.terumo.tracelink.rp902app.domain.rule.RuleRepository
@@ -33,18 +40,38 @@ import jp.co.terumo.tracelink.rp902app.domain.work.WorkContextRepository
  */
 class AppContainer(
     initialReaderSettings: ReaderSettings = ReaderSettings(),
+    private val dataAccessMode: DataAccessMode = DataAccessMode.Fake,
+    private val postgresConnectionSettings: PostgresConnectionSettings? = null,
+    private val registrationEnvironment: RegistrationEnvironment = RegistrationEnvironment(),
 ) {
     private val readerSettingsRepository = InMemoryReaderSettingsRepository(
         initialSettings = initialReaderSettings,
     )
     private val readerRuntimeStateRepository = InMemoryReaderRuntimeStateRepository()
 
-    private val workContextRepository: WorkContextRepository = FakeWorkContextRepository()
-    private val ruleRepository: RuleRepository = FakeRuleRepository()
-    private val equipmentMasterRepository: EquipmentMasterRepository = FakeEquipmentMasterRepository()
+    private val postgresGateway = when (dataAccessMode) {
+        DataAccessMode.Fake -> null
+        DataAccessMode.Postgres -> JdbcPostgresGateway(requirePostgresConnectionSettings())
+    }
+
+    private val workContextRepository: WorkContextRepository = when (dataAccessMode) {
+        DataAccessMode.Fake -> FakeWorkContextRepository()
+        DataAccessMode.Postgres -> PostgresWorkContextRepository(requireNotNull(postgresGateway))
+    }
+    private val ruleRepository: RuleRepository = when (dataAccessMode) {
+        DataAccessMode.Fake -> FakeRuleRepository()
+        DataAccessMode.Postgres -> PostgresRuleRepository(requireNotNull(postgresGateway))
+    }
+    private val equipmentMasterRepository: EquipmentMasterRepository = when (dataAccessMode) {
+        DataAccessMode.Fake -> FakeEquipmentMasterRepository()
+        DataAccessMode.Postgres -> PostgresEquipmentMasterRepository(requireNotNull(postgresGateway))
+    }
     private val readJudgementService: ReadJudgementService = SimpleReadJudgementService()
     private val readResultBundleFactory: ReadResultBundleFactory = DefaultReadResultBundleFactory()
-    private val readResultRepository: ReadResultRepository = FakeReadResultRepository()
+    private val readResultRepository: ReadResultRepository = when (dataAccessMode) {
+        DataAccessMode.Fake -> FakeReadResultRepository()
+        DataAccessMode.Postgres -> PostgresReadResultRepository(requireNotNull(postgresGateway))
+    }
     private val pendingWriteQueue: PendingWriteQueue = InMemoryPendingWriteQueue()
     private val eventLogStore: EventLogStore = InMemoryEventLogStore()
 
@@ -64,5 +91,11 @@ class AppContainer(
         readResultRepository = readResultRepository,
         pendingWriteQueue = pendingWriteQueue,
         eventLogStore = eventLogStore,
+        registrationEnvironment = registrationEnvironment,
     )
+
+    private fun requirePostgresConnectionSettings(): PostgresConnectionSettings =
+        requireNotNull(postgresConnectionSettings) {
+            "PostgreSQL mode requires PostgresConnectionSettings. Fake mode remains the default."
+        }
 }
