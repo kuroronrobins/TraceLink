@@ -7,7 +7,7 @@ import org.junit.Test
 class PostgresSchemaTest {
     @Test
     fun objectNames_areCentralizedWithApiSchema() {
-        assertEquals("api.v_active_work_context", PostgresSchema.activeWorkContextView.sql())
+        assertEquals("api.fn_get_active_work_context", PostgresSchema.getActiveWorkContextFunction.sql())
         assertEquals("api.fn_get_rule_bundle", PostgresSchema.getRuleBundleFunction.sql())
         assertEquals("api.fn_get_equipment_snapshot", PostgresSchema.getEquipmentSnapshotFunction.sql())
         assertEquals(
@@ -18,7 +18,7 @@ class PostgresSchemaTest {
 
     @Test
     fun sqlStatements_referenceCentralizedNames() {
-        assertTrue(PostgresSqlStatements.FetchWorkContext.contains("api.v_active_work_context"))
+        assertTrue(PostgresSqlStatements.FetchWorkContext.contains("api.fn_get_active_work_context"))
         assertTrue(PostgresSqlStatements.FetchRuleBundle.contains("api.fn_get_rule_bundle"))
         assertTrue(PostgresSqlStatements.FetchEquipmentSnapshot.contains("api.fn_get_equipment_snapshot"))
         assertTrue(

@@ -5,6 +5,7 @@ import java.sql.DriverManager
 import java.sql.ResultSet
 import jp.co.terumo.tracelink.rp902app.domain.database.PostgresGateway
 import jp.co.terumo.tracelink.rp902app.domain.equipment.EquipmentSnapshot
+import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationEnvironment
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationResult
 import jp.co.terumo.tracelink.rp902app.domain.rule.RuleBundle
@@ -21,6 +22,7 @@ import kotlinx.coroutines.withContext
  */
 class JdbcPostgresGateway(
     private val connectionSettings: PostgresConnectionSettings,
+    private val registrationEnvironment: RegistrationEnvironment = RegistrationEnvironment(),
     private val connectionFactory: JdbcConnectionFactory = DriverManagerJdbcConnectionFactory(
         connectionSettings,
     ),
@@ -30,14 +32,12 @@ class JdbcPostgresGateway(
         execute("fetch work context") { connection ->
             connection.prepareStatement(PostgresSqlStatements.FetchWorkContext).use { statement ->
                 statement.queryTimeout = connectionSettings.queryTimeoutSeconds()
-                statement.executeQuery().use { resultSet ->
-                    require(resultSet.next()) {
-                        "Active work context view returned no rows."
-                    }
-                    PostgresRowMappers.workContext(
-                        resultSet.toPostgresRow(PostgresRowMappers.WorkContextColumns),
-                    )
-                }
+                statement.setString(1, registrationEnvironment.deviceId)
+                statement.executeQuery().singleRow(
+                    columns = PostgresRowMappers.WorkContextColumns,
+                    emptyMessage = "Active work context function returned no rows.",
+                    mapper = PostgresRowMappers::workContext,
+                )
             }
         }
 
@@ -91,6 +91,7 @@ class JdbcPostgresGateway(
             ReadResultRegistrationResult.Failure(
                 message = gatewayException.message.orEmpty(),
                 kind = PostgresErrorMapper.toRegistrationFailureKind(gatewayException.kind),
+                errorCode = "postgres_gateway_${gatewayException.kind.name.lowercase()}",
             )
         }
     }
@@ -129,7 +130,9 @@ private fun <T> ResultSet.singleRow(
     mapper: (PostgresRow) -> T,
 ): T = use { resultSet ->
     require(resultSet.next()) { emptyMessage }
-    mapper(resultSet.toPostgresRow(columns))
+    val row = mapper(resultSet.toPostgresRow(columns))
+    require(!resultSet.next()) { "Expected exactly one row, but PostgreSQL returned multiple rows." }
+    row
 }
 
 private fun ResultSet.toRows(columns: List<String>): List<PostgresRow> {

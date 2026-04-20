@@ -9,7 +9,7 @@ import org.junit.Test
 
 class InMemoryPendingWriteQueueTest {
     @Test
-    fun enqueueFailure_addsPendingWriteAndDeduplicatesBySessionId() = runBlocking {
+    fun enqueueFailure_addsPendingWriteAndDeduplicatesByIdempotencyKey() = runBlocking {
         val queue = InMemoryPendingWriteQueue()
         val bundle = bundle(sessionId = "session-1")
 
@@ -27,7 +27,7 @@ class InMemoryPendingWriteQueueTest {
         val pending = queue.pendingWrites.value.single()
 
         assertEquals(1, queue.pendingWrites.value.size)
-        assertEquals("session-1", pending.id)
+        assertEquals("device-1:session-1", pending.id)
         assertEquals(1000L, pending.queuedAtEpochMillis)
         assertEquals(2000L, pending.lastAttemptAtEpochMillis)
         assertEquals(2, pending.attemptCount)
@@ -43,7 +43,7 @@ class InMemoryPendingWriteQueueTest {
             failedAtEpochMillis = 1000L,
             message = "network down",
         )
-        queue.remove("session-1")
+        queue.remove("device-1:session-1")
 
         assertEquals(emptyList<Any>(), queue.pendingWrites.value)
     }

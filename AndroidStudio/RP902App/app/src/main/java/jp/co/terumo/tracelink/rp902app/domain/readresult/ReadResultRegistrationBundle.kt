@@ -19,7 +19,15 @@ data class ReadResultRegistrationBundle(
     val ruleVersion: String,
     val equipmentSnapshotVersion: String,
     val tags: List<ReadResultTag>,
-)
+) {
+    /**
+     * Local string representation of the DB idempotency key.
+     *
+     * PostgreSQL must enforce the same key as separate columns: `(device_id, session_id)`.
+     */
+    val idempotencyKey: String
+        get() = "$deviceId:$sessionId"
+}
 
 /** 登録 bundle 内のタグ 1 件。`readCount` は同一 EPC が session 内で読まれた回数。 */
 data class ReadResultTag(

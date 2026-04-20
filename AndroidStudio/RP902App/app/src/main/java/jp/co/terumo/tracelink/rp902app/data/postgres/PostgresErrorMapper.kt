@@ -28,6 +28,7 @@ internal object PostgresErrorMapper {
             PostgresGatewayFailureKind.Retryable -> RegistrationFailureKind.Retryable
             PostgresGatewayFailureKind.Configuration -> RegistrationFailureKind.Configuration
             PostgresGatewayFailureKind.Contract -> RegistrationFailureKind.Contract
+            PostgresGatewayFailureKind.Unknown -> RegistrationFailureKind.Unknown
         }
 
     private fun classify(throwable: Throwable): PostgresGatewayFailureKind =
@@ -40,11 +41,11 @@ internal object PostgresErrorMapper {
             is IllegalArgumentException,
             is IllegalStateException -> PostgresGatewayFailureKind.Contract
 
-            else -> PostgresGatewayFailureKind.Retryable
+            else -> PostgresGatewayFailureKind.Unknown
         }
 
     private fun classifySqlState(sqlState: String?): PostgresGatewayFailureKind {
-        if (sqlState.isNullOrBlank()) return PostgresGatewayFailureKind.Retryable
+        if (sqlState.isNullOrBlank()) return PostgresGatewayFailureKind.Unknown
 
         return when {
             sqlState.startsWith("08") -> PostgresGatewayFailureKind.Retryable
@@ -52,7 +53,7 @@ internal object PostgresErrorMapper {
             sqlState in contractSqlStates -> PostgresGatewayFailureKind.Contract
             sqlState.startsWith("22") -> PostgresGatewayFailureKind.Contract
             sqlState.startsWith("42") -> PostgresGatewayFailureKind.Contract
-            else -> PostgresGatewayFailureKind.Retryable
+            else -> PostgresGatewayFailureKind.Unknown
         }
     }
 

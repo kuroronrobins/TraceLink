@@ -13,4 +13,5 @@ enum class PostgresGatewayFailureKind {
     Retryable,
     Configuration,
     Contract,
+    Unknown,
 }

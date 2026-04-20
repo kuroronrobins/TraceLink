@@ -23,9 +23,8 @@ class InMemoryPendingWriteQueue : PendingWriteQueue {
         failedAtEpochMillis: Long,
         message: String,
     ) {
-        // sessionId を local de-duplication key として扱う。
-        // 同じ session の再失敗は queue entry を増やさず attemptCount を更新する。
-        val pendingWriteId = bundle.sessionId
+        // DB と同じ idempotency key で local queue も重複を抑止する。
+        val pendingWriteId = bundle.idempotencyKey
         _pendingWrites.update { current ->
             if (current.any { pending -> pending.id == pendingWriteId }) {
                 current.map { pending ->

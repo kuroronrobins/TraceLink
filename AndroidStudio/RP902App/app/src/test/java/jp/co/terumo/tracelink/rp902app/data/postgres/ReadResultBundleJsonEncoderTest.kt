@@ -12,6 +12,7 @@ class ReadResultBundleJsonEncoderTest {
     fun encode_serializesRegistrationBundleForJsonbFunctionArgument() {
         val json = ReadResultBundleJsonEncoder.encode(bundle())
 
+        assertTrue(json.contains("\"schemaVersion\":1"))
         assertTrue(json.contains("\"sessionId\":\"session-1\""))
         assertTrue(json.contains("\"registeredAtEpochMillis\":3000"))
         assertTrue(json.contains("\"workId\":\"work-1\""))

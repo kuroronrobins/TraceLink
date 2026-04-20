@@ -51,7 +51,10 @@ class AppContainer(
 
     private val postgresGateway = when (dataAccessMode) {
         DataAccessMode.Fake -> null
-        DataAccessMode.Postgres -> JdbcPostgresGateway(requirePostgresConnectionSettings())
+        DataAccessMode.Postgres -> JdbcPostgresGateway(
+            connectionSettings = requirePostgresConnectionSettings(),
+            registrationEnvironment = registrationEnvironment,
+        )
     }
 
     private val workContextRepository: WorkContextRepository = when (dataAccessMode) {

@@ -258,7 +258,7 @@ class DefaultInventoryRepository(
         pendingWrites.forEach { pendingWrite ->
             val result = register(pendingWrite.bundle)
             when (result) {
-                ReadResultRegistrationResult.Success -> {
+                is ReadResultRegistrationResult.Success -> {
                     pendingWriteQueue.remove(pendingWrite.id)
                     lastCompletedSessionId = pendingWrite.bundle.sessionId
                     appendLog(
@@ -373,8 +373,8 @@ class DefaultInventoryRepository(
         queueOnFailure: Boolean,
     ) {
         when (result) {
-            ReadResultRegistrationResult.Success -> {
-                pendingWriteQueue.remove(bundle.sessionId)
+            is ReadResultRegistrationResult.Success -> {
+                pendingWriteQueue.remove(bundle.idempotencyKey)
                 _state.update { current ->
                     current.copy(registrationState = RegistrationState.Completed(bundle.sessionId))
                 }

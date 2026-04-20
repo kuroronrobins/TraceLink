@@ -217,7 +217,7 @@ class DefaultInventoryRepositoryTest {
         val readResultRepository = RecordingReadResultRepository(
             results = mutableListOf(
                 ReadResultRegistrationResult.Failure("network down"),
-                ReadResultRegistrationResult.Success,
+                ReadResultRegistrationResult.Success(),
             ),
         )
         val repository = repository(
@@ -329,14 +329,16 @@ class DefaultInventoryRepositoryTest {
     }
 
     private class RecordingReadResultRepository(
-        private val results: MutableList<ReadResultRegistrationResult> = mutableListOf(ReadResultRegistrationResult.Success),
+        private val results: MutableList<ReadResultRegistrationResult> = mutableListOf(
+            ReadResultRegistrationResult.Success(),
+        ),
     ) : ReadResultRepository {
         val bundles = mutableListOf<ReadResultRegistrationBundle>()
 
         override suspend fun register(bundle: ReadResultRegistrationBundle): ReadResultRegistrationResult {
             bundles += bundle
             return if (results.isEmpty()) {
-                ReadResultRegistrationResult.Success
+                ReadResultRegistrationResult.Success()
             } else {
                 results.removeAt(0)
             }

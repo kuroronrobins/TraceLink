@@ -1,7 +1,7 @@
 package jp.co.terumo.tracelink.rp902app.data.postgres
 
 internal object PostgresSchema {
-    val activeWorkContextView = QualifiedPostgresName("api", "v_active_work_context")
+    val getActiveWorkContextFunction = QualifiedPostgresName("api", "fn_get_active_work_context")
     val getRuleBundleFunction = QualifiedPostgresName("api", "fn_get_rule_bundle")
     val getEquipmentSnapshotFunction = QualifiedPostgresName("api", "fn_get_equipment_snapshot")
     val registerReadResultBundleFunction = QualifiedPostgresName("api", "fn_register_read_result_bundle")
@@ -38,6 +38,11 @@ internal object PostgresColumns {
     const val EquipmentType = "equipment_type"
     const val DisplayName = "display_name"
     const val Success = "success"
+    const val Duplicate = "duplicate"
+    const val AcceptedSessionId = "accepted_session_id"
+    const val ResultId = "result_id"
+    const val FailureKind = "failure_kind"
+    const val ErrorCode = "error_code"
     const val Message = "message"
 }
 
@@ -48,8 +53,7 @@ internal object PostgresSqlStatements {
             ${PostgresColumns.ReportId},
             ${PostgresColumns.OperatorId},
             ${PostgresColumns.StartedAtEpochMillis}
-        from ${PostgresSchema.activeWorkContextView.sql()}
-        limit 1
+        from ${PostgresSchema.getActiveWorkContextFunction.sql()}(?)
     """.trimIndent()
 
     val FetchRuleBundle = """
@@ -75,6 +79,11 @@ internal object PostgresSqlStatements {
     val RegisterReadResultBundle = """
         select
             ${PostgresColumns.Success},
+            ${PostgresColumns.Duplicate},
+            ${PostgresColumns.AcceptedSessionId},
+            ${PostgresColumns.ResultId},
+            ${PostgresColumns.FailureKind},
+            ${PostgresColumns.ErrorCode},
             ${PostgresColumns.Message}
         from ${PostgresSchema.registerReadResultBundleFunction.sql()}(?::jsonb)
     """.trimIndent()

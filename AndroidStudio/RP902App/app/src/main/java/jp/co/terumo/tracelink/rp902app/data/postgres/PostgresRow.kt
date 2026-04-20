@@ -31,6 +31,15 @@ internal data class PostgresRow(
         }
     }
 
+    fun optionalBoolean(column: String): Boolean? {
+        val value = values[column] ?: return null
+        return when (value) {
+            is Boolean -> value
+            is String -> value.toBooleanStrict()
+            else -> error("Column '$column' cannot be converted to Boolean: ${value::class.java.name}")
+        }
+    }
+
     fun requiredStringSet(column: String): Set<String> {
         val value = requireNotNull(values[column]) { "Required column '$column' was null." }
         return when (value) {

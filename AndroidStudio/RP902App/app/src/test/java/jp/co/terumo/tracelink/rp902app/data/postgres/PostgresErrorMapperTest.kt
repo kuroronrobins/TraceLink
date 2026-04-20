@@ -45,4 +45,14 @@ class PostgresErrorMapperTest {
             PostgresErrorMapper.toRegistrationFailureKind(PostgresGatewayFailureKind.Configuration),
         )
     }
+
+    @Test
+    fun toGatewayException_mapsUnclassifiedSqlStateAsUnknown() {
+        val exception = PostgresErrorMapper.toGatewayException(
+            operation = "register read results",
+            throwable = SQLException("unexpected", "HY000"),
+        )
+
+        assertEquals(PostgresGatewayFailureKind.Unknown, exception.kind)
+    }
 }

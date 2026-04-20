@@ -7,6 +7,8 @@ internal object ReadResultBundleJsonEncoder {
     fun encode(bundle: ReadResultRegistrationBundle): String =
         buildString {
             append("{")
+            appendNumberField("schemaVersion", 1L)
+            append(",")
             appendStringField("sessionId", bundle.sessionId)
             append(",")
             appendNumberField("registeredAtEpochMillis", bundle.registeredAtEpochMillis)

@@ -33,6 +33,11 @@ internal object PostgresRowMappers {
 
     val RegistrationResultColumns = listOf(
         PostgresColumns.Success,
+        PostgresColumns.Duplicate,
+        PostgresColumns.AcceptedSessionId,
+        PostgresColumns.ResultId,
+        PostgresColumns.FailureKind,
+        PostgresColumns.ErrorCode,
         PostgresColumns.Message,
     )
 
@@ -67,13 +72,28 @@ internal object PostgresRowMappers {
 
     fun registrationResult(row: PostgresRow): ReadResultRegistrationResult =
         if (row.requiredBoolean(PostgresColumns.Success)) {
-            ReadResultRegistrationResult.Success
+            ReadResultRegistrationResult.Success(
+                duplicate = row.requiredBoolean(PostgresColumns.Duplicate),
+                acceptedSessionId = row.requiredString(PostgresColumns.AcceptedSessionId),
+                resultId = row.requiredString(PostgresColumns.ResultId),
+            )
         } else {
             ReadResultRegistrationResult.Failure(
                 message = row.optionalString(PostgresColumns.Message)
                     ?: "PostgreSQL rejected read result registration.",
-                kind = RegistrationFailureKind.Contract,
+                kind = row.failureKind(),
+                errorCode = row.optionalString(PostgresColumns.ErrorCode),
             )
+        }
+
+    private fun PostgresRow.failureKind(): RegistrationFailureKind =
+        when (optionalString(PostgresColumns.FailureKind)) {
+            "retryable" -> RegistrationFailureKind.Retryable
+            "configuration" -> RegistrationFailureKind.Configuration
+            "contract" -> RegistrationFailureKind.Contract
+            "unknown" -> RegistrationFailureKind.Unknown
+            null -> RegistrationFailureKind.Unknown
+            else -> RegistrationFailureKind.Unknown
         }
 
     private fun equipmentRecord(row: PostgresRow): EquipmentRecord =

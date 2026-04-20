@@ -17,7 +17,11 @@ class FakeReadResultRepository : ReadResultRepository {
         return if (bundle.tags.isEmpty()) {
             ReadResultRegistrationResult.Failure("No tags to register.")
         } else {
-            ReadResultRegistrationResult.Success
+            ReadResultRegistrationResult.Success(
+                duplicate = false,
+                acceptedSessionId = bundle.sessionId,
+                resultId = "fake-${bundle.idempotencyKey}",
+            )
         }
     }
 }

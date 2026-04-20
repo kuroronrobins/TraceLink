@@ -11,10 +11,16 @@ interface ReadResultRepository {
 }
 
 sealed interface ReadResultRegistrationResult {
-    data object Success : ReadResultRegistrationResult
+    data class Success(
+        val duplicate: Boolean = false,
+        val acceptedSessionId: String? = null,
+        val resultId: String? = null,
+    ) : ReadResultRegistrationResult
+
     data class Failure(
         val message: String,
         val kind: RegistrationFailureKind = RegistrationFailureKind.Retryable,
+        val errorCode: String? = null,
     ) : ReadResultRegistrationResult
 }
 

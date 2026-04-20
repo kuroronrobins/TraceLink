@@ -64,6 +64,11 @@ class PostgresRowMappersTest {
             PostgresRow(
                 mapOf(
                     PostgresColumns.Success to false,
+                    PostgresColumns.Duplicate to false,
+                    PostgresColumns.AcceptedSessionId to null,
+                    PostgresColumns.ResultId to null,
+                    PostgresColumns.FailureKind to "contract",
+                    PostgresColumns.ErrorCode to "invalid_json_schema",
                     PostgresColumns.Message to "schema rejected bundle",
                 ),
             ),
@@ -73,6 +78,30 @@ class PostgresRowMappersTest {
         result as ReadResultRegistrationResult.Failure
         assertEquals("schema rejected bundle", result.message)
         assertEquals(RegistrationFailureKind.Contract, result.kind)
+        assertEquals("invalid_json_schema", result.errorCode)
+    }
+
+    @Test
+    fun registrationResult_mapsDuplicateSuccessMetadata() {
+        val result = PostgresRowMappers.registrationResult(
+            PostgresRow(
+                mapOf(
+                    PostgresColumns.Success to true,
+                    PostgresColumns.Duplicate to true,
+                    PostgresColumns.AcceptedSessionId to "session-1",
+                    PostgresColumns.ResultId to "00000000-0000-0000-0000-000000000001",
+                    PostgresColumns.FailureKind to null,
+                    PostgresColumns.ErrorCode to null,
+                    PostgresColumns.Message to "already registered",
+                ),
+            ),
+        )
+
+        assertTrue(result is ReadResultRegistrationResult.Success)
+        result as ReadResultRegistrationResult.Success
+        assertEquals(true, result.duplicate)
+        assertEquals("session-1", result.acceptedSessionId)
+        assertEquals("00000000-0000-0000-0000-000000000001", result.resultId)
     }
 
     private fun equipmentRow(equipmentId: String, epc: String): PostgresRow =
