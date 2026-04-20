@@ -201,6 +201,28 @@ Unknown top-level field と unknown tag field は `success=false`, `failure_kind
 
 DB は未知の `judgementReasonCode` を保存してよいが、未知値を reject する場合は `failure_kind='contract'` とする。
 
+### Registration Error Codes
+
+`api.fn_register_read_result_bundle` は入力検証・業務 reject を exception ではなく result row で返す。
+この契約で定義する `error_code` は以下とする。
+
+| error_code | failure_kind | meaning |
+| --- | --- | --- |
+| `unknown_field` | `contract` | top-level または tag object に未知 field がある |
+| `missing_required_field` | `contract` | required field がない |
+| `invalid_type` | `contract` | JSON type、空文字、整数、正規化 EPC などの型・形式違反 |
+| `invalid_schema_version` | `contract` | `schemaVersion` が `1` ではない |
+| `invalid_judgement_status` | `contract` | `judgementStatus` または `judgementReasonCode` の整合性違反 |
+| `invalid_time_range` | `contract` | `lastSeenAtEpochMillis < firstSeenAtEpochMillis` |
+| `empty_tags` | `contract` | `tags` が空 |
+| `duplicate_epc` | `contract` | 同一 bundle 内に同じ EPC が複数存在する |
+| `work_not_found` | `contract` | `workId` が存在しない |
+| `report_mismatch` | `contract` | `reportId` が work context と一致しない |
+| `rule_bundle_not_found` | `contract` | `ruleVersion` が active rule bundle と一致しない |
+| `empty_equipment_snapshot` | `contract` | `equipmentSnapshotVersion` が active non-empty snapshot と一致しない |
+| `idempotency_payload_mismatch` | `contract` | 同一 `(deviceId, sessionId)` に異なる payload が送信された |
+| `device_not_assigned` | `configuration` | `deviceId` が未登録、disabled、または submitted workId に active assignment されていない |
+
 ## Idempotency Contract
 
 DB の冪等性 key は `(deviceId, sessionId)` とする。
@@ -242,7 +264,7 @@ Rules:
 | class `28` auth failure | `Configuration` | credential / role issue |
 | class `22` data exception | `Contract` | invalid data shape |
 | class `42` syntax / undefined object | `Contract` | missing function / wrong column |
-| `42883`, `42P01`, `42703`, `42804`, `21000`, `0A000` | `Contract` | explicit contract mismatch |
+| `P0002`, `P0003`, `42883`, `42P01`, `42703`, `42804`, `21000`, `0A000` | `Contract` | explicit contract mismatch |
 | other / no SQLSTATE | `Unknown` | do not queue until classified |
 
 ## Kotlin Mapping Table
@@ -262,4 +284,5 @@ Rules:
 ## Current Status
 
 Android 側はこの契約に合わせて compile / unit test / debug build 済み。
-live PostgreSQL 接続、DB 実 DDL、証明書配布、credential 配布は未実施。
+DB 側の starter implementation は `docs/architecture/postgresql` 配下に分割して配置済み。
+live PostgreSQL 接続、証明書配布、credential 配布、本番 import job は未実施。

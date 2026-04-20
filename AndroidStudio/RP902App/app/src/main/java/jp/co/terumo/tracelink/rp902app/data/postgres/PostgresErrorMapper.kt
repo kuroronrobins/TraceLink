@@ -60,6 +60,8 @@ internal object PostgresErrorMapper {
     private val contractSqlStates = setOf(
         "0A000",
         "21000",
+        "P0002",
+        "P0003",
         "42804",
         "42883",
         "42P01",

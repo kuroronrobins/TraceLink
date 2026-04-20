@@ -39,6 +39,21 @@ class PostgresErrorMapperTest {
     }
 
     @Test
+    fun toGatewayException_mapsExplicitFunctionContractExceptionsAsContract() {
+        val noRowsException = PostgresErrorMapper.toGatewayException(
+            operation = "fetch active work context",
+            throwable = SQLException("device_not_assigned", "P0002"),
+        )
+        val multipleRowsException = PostgresErrorMapper.toGatewayException(
+            operation = "fetch active work context",
+            throwable = SQLException("multiple_active_work_contexts", "P0003"),
+        )
+
+        assertEquals(PostgresGatewayFailureKind.Contract, noRowsException.kind)
+        assertEquals(PostgresGatewayFailureKind.Contract, multipleRowsException.kind)
+    }
+
+    @Test
     fun toRegistrationFailureKind_keepsFailureCategory() {
         assertEquals(
             RegistrationFailureKind.Configuration,
