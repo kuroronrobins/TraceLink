@@ -18,6 +18,9 @@ Android が参照してよい public boundary は `api.fn_*` だけであり、�
 \ir postgresql/50_verification_queries.sql
 ```
 
+real DB / local container での検証手順は `VALIDATION_PLAN.md` を参照する。
+Android 用 least-privilege role は、SQL 実装を適用してから `60_role_hardening_template.sql` で設定する。
+
 ## File Roles
 
 | file | role |
@@ -28,6 +31,10 @@ Android が参照してよい public boundary は `api.fn_*` だけであり、�
 | `30_api_functions.sql` | Android-facing `api.fn_*` を実装する |
 | `40_seed_test_data.sql` | manual verification 用の最小 seed data を投入する |
 | `50_verification_queries.sql` | normal / duplicate / payload mismatch / validation failure の確認 query をまとめる |
+| `60_role_hardening_template.sql` | Android role と SECURITY DEFINER owner の権限 template |
+| `70_role_validation_queries.sql` | Android role が `api.fn_*` だけ使えることを確認する query |
+| `compose.postgres-smoke.yml` | local smoke test 用 PostgreSQL container |
+| `VALIDATION_PLAN.md` | DB / role / Android smoke test の手順と期待結果 |
 
 ## Internal Storage Summary
 

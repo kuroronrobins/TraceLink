@@ -52,7 +52,7 @@ Data access also defaults to fake mode. `AppContainer` can be constructed with `
 
 `JdbcPostgresGateway` uses pgJDBC and opens a short-lived JDBC connection per operation on `Dispatchers.IO`. SQL text, schema names, function names, row mapping, JSONB registration payload conversion, and PostgreSQL error classification stay inside `data.postgres`. UI, ViewModel, `DefaultInventoryRepository`, `InventorySession`, and `ReadJudgementService` do not contain SQL or table names.
 
-The PostgreSQL path has compile, unit-test, and debug APK build coverage. A live DB smoke test is still required after the View / Function contract and credentials are supplied.
+The PostgreSQL path has compile, unit-test, and debug APK build coverage. Live DB verification procedures are defined in `postgresql/VALIDATION_PLAN.md`; a real Android postgres-mode smoke test still requires debug-only wiring because `MainActivity` defaults to fake data access.
 
 `AppContainer` is the switch point:
 

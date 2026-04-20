@@ -13,3 +13,5 @@
 -- Optional verification data and checks:
 -- \ir postgresql/40_seed_test_data.sql
 -- \ir postgresql/50_verification_queries.sql
+-- \ir postgresql/60_role_hardening_template.sql
+-- \ir postgresql/70_role_validation_queries.sql
