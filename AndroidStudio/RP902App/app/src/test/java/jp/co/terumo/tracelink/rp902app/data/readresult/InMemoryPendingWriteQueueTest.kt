@@ -2,6 +2,7 @@ package jp.co.terumo.tracelink.rp902app.data.readresult
 
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultTag
+import jp.co.terumo.tracelink.rp902app.domain.judgement.ReadJudgementStatus
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -52,12 +53,19 @@ class InMemoryPendingWriteQueueTest {
         registeredAtEpochMillis = 900L,
         deviceId = "device-1",
         readerType = "RP902",
+        workId = "work-1",
+        reportId = "report-1",
+        operatorId = "operator-1",
+        ruleVersion = "rule-v1",
+        equipmentSnapshotVersion = "equipment-v1",
         tags = listOf(
             ReadResultTag(
                 epc = "E2806894000040035A1F90A1",
                 firstSeenAtEpochMillis = 100L,
                 lastSeenAtEpochMillis = 200L,
                 readCount = 2,
+                judgementStatus = ReadJudgementStatus.Accepted,
+                judgementReasonCode = null,
             ),
         ),
     )

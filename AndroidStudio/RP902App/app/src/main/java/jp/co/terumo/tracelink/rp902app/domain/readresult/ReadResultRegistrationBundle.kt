@@ -1,16 +1,23 @@
 package jp.co.terumo.tracelink.rp902app.domain.readresult
 
+import jp.co.terumo.tracelink.rp902app.domain.judgement.ReadJudgementStatus
+
 /**
- * PostgreSQL function へ渡す読取結果登録単位。
+ * PostgreSQL function へ渡す判定済み読取結果の登録単位。
  *
- * 現段階では実 DB 接続を入れず、Android 側が組み立てる登録単位を先に固定する。
- * 実装時は `docs/architecture/PostgreSQLAccessContract.md` の View / Function 境界に合わせる。
+ * Android 側で work context / rule / equipment / judgement をそろえてから作る。
+ * DB 実装はこの bundle を PostgreSQL function へ渡し、table 直叩きの知識を上位へ漏らさない。
  */
 data class ReadResultRegistrationBundle(
     val sessionId: String,
     val registeredAtEpochMillis: Long,
     val deviceId: String,
     val readerType: String,
+    val workId: String,
+    val reportId: String,
+    val operatorId: String?,
+    val ruleVersion: String,
+    val equipmentSnapshotVersion: String,
     val tags: List<ReadResultTag>,
 )
 
@@ -20,4 +27,6 @@ data class ReadResultTag(
     val firstSeenAtEpochMillis: Long,
     val lastSeenAtEpochMillis: Long,
     val readCount: Int,
+    val judgementStatus: ReadJudgementStatus,
+    val judgementReasonCode: String?,
 )

@@ -29,7 +29,12 @@ The implementation remains in the single `:app` module and separates packages by
 - `domain/log`: structured app log models and log store contract.
 - `data/reader`: fake/real reader gateway implementations and switching.
 - `data/inventory`: default inventory workflow orchestration.
-- `data/readresult`: fake read result repository and in-memory pending write queue.
+- `data/work`: fake work context repository.
+- `data/rule`: fake rule repository.
+- `data/equipment`: fake equipment master repository.
+- `data/judgement`: minimal local judgement implementation.
+- `data/readresult`: read result bundle factory, fake read result repository, and in-memory pending write queue.
+- `data/postgres`: repository adapters that delegate to `PostgresGateway`.
 - `data/log`: in-memory event log store.
 - `ui/app`: app shell and route selection.
 - `ui/inventory`: inventory screen state projection and Compose UI.
@@ -37,7 +42,7 @@ The implementation remains in the single `:app` module and separates packages by
 
 The ViewModel exposes UI state as a projection of repository state. Composables receive state and callbacks only; they do not call reader gateways or PostgreSQL-facing repositories directly.
 
-`DefaultInventoryRepository` currently orchestrates reader events, session duplicate filtering, result registration, pending write updates, and structured log writes. Rule/master/context retrieval and local judgement have placeholder contracts and should be injected as separate responsibilities before full PostgreSQL integration.
+`DefaultInventoryRepository` remains the UI-facing workflow facade. It subscribes to reader events, updates repository state, aggregates logs, and runs the registration/retry order. Work context retrieval, rule retrieval, equipment snapshot retrieval, local judgement, and registration bundle construction are injected responsibilities.
 
 ## Current Stage
 

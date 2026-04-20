@@ -1,13 +1,22 @@
 package jp.co.terumo.tracelink.rp902app.data.inventory
 
+import java.util.Locale
 import java.util.UUID
+import jp.co.terumo.tracelink.rp902app.data.equipment.FakeEquipmentMasterRepository
+import jp.co.terumo.tracelink.rp902app.data.judgement.SimpleReadJudgementService
 import jp.co.terumo.tracelink.rp902app.data.log.InMemoryEventLogStore
 import jp.co.terumo.tracelink.rp902app.data.reader.FakeReaderGateway
+import jp.co.terumo.tracelink.rp902app.data.readresult.DefaultReadResultBundleFactory
 import jp.co.terumo.tracelink.rp902app.data.readresult.FakeReadResultRepository
 import jp.co.terumo.tracelink.rp902app.data.readresult.InMemoryPendingWriteQueue
+import jp.co.terumo.tracelink.rp902app.data.rule.FakeRuleRepository
+import jp.co.terumo.tracelink.rp902app.data.work.FakeWorkContextRepository
+import jp.co.terumo.tracelink.rp902app.domain.equipment.EquipmentMasterRepository
 import jp.co.terumo.tracelink.rp902app.domain.inventory.InventoryRepository
 import jp.co.terumo.tracelink.rp902app.domain.inventory.InventoryRepositoryState
 import jp.co.terumo.tracelink.rp902app.domain.inventory.InventorySession
+import jp.co.terumo.tracelink.rp902app.domain.inventory.InventoryTag
+import jp.co.terumo.tracelink.rp902app.domain.judgement.ReadJudgementService
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogCategory
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogLevel
 import jp.co.terumo.tracelink.rp902app.domain.log.EventLogStore
@@ -17,10 +26,13 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEventLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
 import jp.co.terumo.tracelink.rp902app.domain.reader.displayText
 import jp.co.terumo.tracelink.rp902app.domain.readresult.PendingWriteQueue
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultBundleFactory
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationResult
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRepository
 import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationState
+import jp.co.terumo.tracelink.rp902app.domain.rule.RuleRepository
+import jp.co.terumo.tracelink.rp902app.domain.work.WorkContextRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,18 +47,24 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Inventory 機能の orchestration 実装。
+ * Inventory 画面向け repository の一時 facade 実装。
  *
- * reader からの tag read、session 内重複除去、結果登録、pending write、structured log を
- * ここで組み合わせる。vendor SDK の詳細は `ReaderGateway` の内側に、PostgreSQL function
- * の詳細は `ReadResultRepository` の内側に閉じ込めることで、UI は repository state だけを見る。
+ * UI 互換の入口を維持しつつ、work/rule/equipment 取得、判定、登録 bundle 生成、
+ * 結果登録、pending write をそれぞれの契約へ委譲する。
  */
 class DefaultInventoryRepository(
     private val readerGateway: ReaderGateway = FakeReaderGateway(),
+    private val workContextRepository: WorkContextRepository = FakeWorkContextRepository(),
+    private val ruleRepository: RuleRepository = FakeRuleRepository(),
+    private val equipmentMasterRepository: EquipmentMasterRepository = FakeEquipmentMasterRepository(),
+    private val readJudgementService: ReadJudgementService = SimpleReadJudgementService(),
+    private val readResultBundleFactory: ReadResultBundleFactory = DefaultReadResultBundleFactory(),
     private val readResultRepository: ReadResultRepository = FakeReadResultRepository(),
     private val pendingWriteQueue: PendingWriteQueue = InMemoryPendingWriteQueue(),
     private val eventLogStore: EventLogStore = InMemoryEventLogStore(),
     private val inventorySession: InventorySession = InventorySession(),
+    private val deviceId: String = "android-local-device",
+    private val readerType: String = "RP902",
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val sessionIdFactory: () -> String = { UUID.randomUUID().toString() },
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
@@ -60,7 +78,6 @@ class DefaultInventoryRepository(
     override val state: StateFlow<InventoryRepositoryState> = _state.asStateFlow()
 
     init {
-        // 複数の lower layer Flow を repository state に集約し、UI の source of truth を一本化する。
         eventLogStore.logs
             .onEach { logs ->
                 _state.update { current -> current.copy(logs = logs) }
@@ -78,7 +95,6 @@ class DefaultInventoryRepository(
                 _state.update { current ->
                     current.copy(
                         connectionState = connectionState,
-                        // 接続断時に画面だけ Running のまま残らないよう、repository state で止める。
                         isInventoryRunning = current.isInventoryRunning &&
                             connectionState == ReaderConnectionState.Connected,
                     )
@@ -96,7 +112,6 @@ class DefaultInventoryRepository(
             .launchIn(scope)
 
         readerGateway.tagReads
-            // tag read は gateway から非同期に流れるため、重複除去と state 更新を repository に閉じ込める。
             .onEach(::recordRead)
             .catch { throwable ->
                 appendLog(
@@ -193,21 +208,9 @@ class DefaultInventoryRepository(
     }
 
     override suspend fun registerCurrentSessionResults() {
-        val bundle = inventorySession.toRegistrationBundle(
-            sessionId = sessionIdFactory(),
-            registeredAtEpochMillis = clock(),
-            deviceId = "android-local-device",
-            readerType = "RP902",
-        )
-
-        if (bundle.tags.isEmpty()) {
-            val message = "No tags to register."
-            _state.update { current -> current.copy(registrationState = RegistrationState.Failed(message)) }
-            appendLog(
-                level = AppLogLevel.Warning,
-                category = AppLogCategory.ResultRegistration,
-                message = message,
-            )
+        val sessionTags = inventorySession.snapshot()
+        if (sessionTags.isEmpty()) {
+            handleEmptySessionRegistration()
             return
         }
 
@@ -215,8 +218,13 @@ class DefaultInventoryRepository(
         appendLog(
             level = AppLogLevel.Info,
             category = AppLogCategory.ResultRegistration,
-            message = "Result registration started with ${bundle.tags.size} tags.",
+            message = "Result registration started with ${sessionTags.size} tags.",
         )
+
+        val bundle = prepareRegistrationBundle(sessionTags).getOrElse { throwable ->
+            handleRegistrationPreparationFailure(throwable)
+            return
+        }
 
         handleRegistrationResult(
             bundle = bundle,
@@ -247,7 +255,6 @@ class DefaultInventoryRepository(
         var lastFailureMessage: String? = null
 
         pendingWrites.forEach { pendingWrite ->
-            // 失敗が残っても他の pending write は続けて試し、現場復旧時の手戻りを減らす。
             val result = register(pendingWrite.bundle)
             when (result) {
                 ReadResultRegistrationResult.Success -> {
@@ -290,11 +297,12 @@ class DefaultInventoryRepository(
     }
 
     private suspend fun recordRead(read: ReaderTagRead) {
-        // callback 由来の想定外値でアプリ全体を落とさないよう、ログ付きで安全に失敗させる。
         runCatching { inventorySession.record(read) }
             .onSuccess { tags ->
                 _state.update { current -> current.copy(tags = tags) }
-                val recordedTag = tags.firstOrNull { tag -> tag.epc == read.epc }
+                val recordedTag = tags.firstOrNull { tag ->
+                    tag.epc == read.epc.trim().uppercase(Locale.US)
+                }
                 appendLog(
                     level = AppLogLevel.Info,
                     category = AppLogCategory.Inventory,
@@ -310,6 +318,52 @@ class DefaultInventoryRepository(
                     message = "Read ignored: ${throwable.message.orEmpty()}",
                 )
             }
+    }
+
+    private suspend fun prepareRegistrationBundle(
+        sessionTags: List<InventoryTag>,
+    ): Result<ReadResultRegistrationBundle> = runCatching {
+        val workContext = workContextRepository.resolveCurrentWorkContext()
+        val ruleBundle = ruleRepository.fetchRuleBundle(workContext)
+        val equipmentSnapshot = equipmentMasterRepository.fetchEquipmentSnapshot(workContext)
+        val judgementResult = readJudgementService.judge(
+            workContext = workContext,
+            ruleBundle = ruleBundle,
+            equipmentSnapshot = equipmentSnapshot,
+            sessionTags = sessionTags,
+        )
+
+        readResultBundleFactory.create(
+            sessionId = sessionIdFactory(),
+            registeredAtEpochMillis = clock(),
+            deviceId = deviceId,
+            readerType = readerType,
+            workContext = workContext,
+            ruleBundle = ruleBundle,
+            equipmentSnapshot = equipmentSnapshot,
+            judgementResult = judgementResult,
+            sessionTags = sessionTags,
+        )
+    }
+
+    private suspend fun handleEmptySessionRegistration() {
+        val message = "No tags to register."
+        _state.update { current -> current.copy(registrationState = RegistrationState.Failed(message)) }
+        appendLog(
+            level = AppLogLevel.Warning,
+            category = AppLogCategory.ResultRegistration,
+            message = message,
+        )
+    }
+
+    private suspend fun handleRegistrationPreparationFailure(throwable: Throwable) {
+        val message = throwable.message ?: "Unknown result registration preparation error."
+        _state.update { current -> current.copy(registrationState = RegistrationState.Failed(message)) }
+        appendLog(
+            level = AppLogLevel.Error,
+            category = AppLogCategory.ResultRegistration,
+            message = "Result registration preparation failed: $message",
+        )
     }
 
     private suspend fun handleRegistrationResult(

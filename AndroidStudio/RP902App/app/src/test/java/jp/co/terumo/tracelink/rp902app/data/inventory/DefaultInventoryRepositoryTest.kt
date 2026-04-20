@@ -4,6 +4,7 @@ import jp.co.terumo.tracelink.rp902app.data.log.InMemoryEventLogStore
 import jp.co.terumo.tracelink.rp902app.data.readresult.InMemoryPendingWriteQueue
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogCategory
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogLevel
+import jp.co.terumo.tracelink.rp902app.domain.judgement.ReadJudgementStatus
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderConnectionState
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGateway
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEvent
@@ -13,6 +14,8 @@ import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationB
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRepository
 import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationResult
 import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationState
+import jp.co.terumo.tracelink.rp902app.domain.work.WorkContext
+import jp.co.terumo.tracelink.rp902app.domain.work.WorkContextRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -105,6 +108,43 @@ class DefaultInventoryRepositoryTest {
             assertEquals("session-1", state.pendingWrites.single().bundle.sessionId)
             assertEquals(1, state.pendingWrites.single().attemptCount)
             assertEquals(1, readResultRepository.bundles.size)
+            assertEquals("fake-work-001", readResultRepository.bundles.single().workId)
+            assertEquals(
+                ReadJudgementStatus.Accepted,
+                readResultRepository.bundles.single().tags.single().judgementStatus,
+            )
+        } finally {
+            repository.close()
+        }
+    }
+
+    @Test
+    fun registrationPreparationFailure_setsFailedStateWithoutPendingWrite() = runBlocking {
+        val readerGateway = ManualReaderGateway()
+        val readResultRepository = RecordingReadResultRepository()
+        val repository = repository(
+            readerGateway = readerGateway,
+            workContextRepository = FailingWorkContextRepository(),
+            readResultRepository = readResultRepository,
+        )
+
+        try {
+            readerGateway.emitTag("E2806894000040035A1F90A1", 1000L)
+            settle()
+
+            repository.registerCurrentSessionResults()
+            settle()
+
+            val state = repository.state.value
+            val registrationState = state.registrationState
+
+            assertTrue(registrationState is RegistrationState.Failed)
+            assertEquals(
+                "work context unavailable",
+                (registrationState as RegistrationState.Failed).message,
+            )
+            assertEquals(emptyList<Any>(), state.pendingWrites)
+            assertEquals(emptyList<Any>(), readResultRepository.bundles)
         } finally {
             repository.close()
         }
@@ -172,9 +212,11 @@ class DefaultInventoryRepositoryTest {
 
     private fun repository(
         readerGateway: ReaderGateway,
+        workContextRepository: WorkContextRepository = StaticWorkContextRepository(),
         readResultRepository: ReadResultRepository = RecordingReadResultRepository(),
     ): DefaultInventoryRepository = DefaultInventoryRepository(
         readerGateway = readerGateway,
+        workContextRepository = workContextRepository,
         readResultRepository = readResultRepository,
         pendingWriteQueue = InMemoryPendingWriteQueue(),
         eventLogStore = InMemoryEventLogStore(),
@@ -233,6 +275,21 @@ class DefaultInventoryRepositoryTest {
 
         suspend fun emitEvent(event: ReaderGatewayEvent) {
             _events.emit(event)
+        }
+    }
+
+    private class StaticWorkContextRepository : WorkContextRepository {
+        override suspend fun resolveCurrentWorkContext(): WorkContext = WorkContext(
+            workId = "fake-work-001",
+            reportId = "fake-report-001",
+            operatorId = "fake-operator",
+            startedAtEpochMillis = 0L,
+        )
+    }
+
+    private class FailingWorkContextRepository : WorkContextRepository {
+        override suspend fun resolveCurrentWorkContext(): WorkContext {
+            error("work context unavailable")
         }
     }
 

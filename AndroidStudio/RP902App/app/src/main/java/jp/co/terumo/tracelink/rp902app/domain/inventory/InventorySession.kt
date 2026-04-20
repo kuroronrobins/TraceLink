@@ -2,14 +2,11 @@ package jp.co.terumo.tracelink.rp902app.domain.inventory
 
 import java.util.Locale
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
-import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
-import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultTag
 
 /**
- * 1 回の inventory session 内で読まれたタグを管理する純粋ロジック。
+ * 1 回の読取 session 内で EPC を正規化し、重複を取り除く純粋ロジック。
  *
- * 同じ EPC が何度読まれても画面上は 1 件にまとめ、`readCount` と最終読取時刻だけを更新する。
- * Android や vendor SDK に依存しないため、単体テストで重複除去の仕様を確認しやすい。
+ * DB 登録、rule/master 取得、判定、Android API には依存させない。
  */
 class InventorySession {
     private val tagsByEpc = linkedMapOf<String, InventoryTag>()
@@ -17,8 +14,7 @@ class InventorySession {
     /**
      * 1 回分の読取を session に反映し、重複除去後の snapshot を返す。
      *
-     * EPC は大文字へ正規化する。同じセッション内の重複判定キーなので、
-     * ここを変える場合は登録 bundle とテストの期待値も確認する。
+     * EPC 正規化は bundle 生成や判定の前提になるため、ここで一元化する。
      */
     fun record(read: ReaderTagRead): List<InventoryTag> {
         val epc = normalizeEpc(read.epc)
@@ -42,31 +38,9 @@ class InventorySession {
 
     fun snapshot(): List<InventoryTag> = tagsByEpc.values.toList()
 
-    /** 現在の session を破棄する。pending write queue は別責務なのでここでは触らない。 */
     fun clear() {
         tagsByEpc.clear()
     }
-
-    /** 現在の session を PostgreSQL function へ渡す登録 bundle に変換する。 */
-    fun toRegistrationBundle(
-        sessionId: String,
-        registeredAtEpochMillis: Long,
-        deviceId: String,
-        readerType: String,
-    ): ReadResultRegistrationBundle = ReadResultRegistrationBundle(
-        sessionId = sessionId,
-        registeredAtEpochMillis = registeredAtEpochMillis,
-        deviceId = deviceId,
-        readerType = readerType,
-        tags = snapshot().map { tag ->
-            ReadResultTag(
-                epc = tag.epc,
-                firstSeenAtEpochMillis = tag.firstSeenAtEpochMillis,
-                lastSeenAtEpochMillis = tag.lastSeenAtEpochMillis,
-                readCount = tag.readCount,
-            )
-        },
-    )
 
     private fun normalizeEpc(epc: String): String = epc.trim().uppercase(Locale.US)
 }

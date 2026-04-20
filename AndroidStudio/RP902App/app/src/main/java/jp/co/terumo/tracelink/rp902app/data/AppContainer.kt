@@ -1,23 +1,35 @@
 package jp.co.terumo.tracelink.rp902app.data
 
+import jp.co.terumo.tracelink.rp902app.data.equipment.FakeEquipmentMasterRepository
 import jp.co.terumo.tracelink.rp902app.data.inventory.DefaultInventoryRepository
+import jp.co.terumo.tracelink.rp902app.data.judgement.SimpleReadJudgementService
+import jp.co.terumo.tracelink.rp902app.data.log.InMemoryEventLogStore
 import jp.co.terumo.tracelink.rp902app.data.reader.ConfigurableReaderGateway
 import jp.co.terumo.tracelink.rp902app.data.reader.bluetooth.InMemoryReaderRuntimeStateRepository
+import jp.co.terumo.tracelink.rp902app.data.readresult.DefaultReadResultBundleFactory
+import jp.co.terumo.tracelink.rp902app.data.readresult.FakeReadResultRepository
+import jp.co.terumo.tracelink.rp902app.data.readresult.InMemoryPendingWriteQueue
+import jp.co.terumo.tracelink.rp902app.data.rule.FakeRuleRepository
 import jp.co.terumo.tracelink.rp902app.data.settings.InMemoryReaderSettingsRepository
+import jp.co.terumo.tracelink.rp902app.data.work.FakeWorkContextRepository
+import jp.co.terumo.tracelink.rp902app.domain.equipment.EquipmentMasterRepository
 import jp.co.terumo.tracelink.rp902app.domain.inventory.InventoryRepository
+import jp.co.terumo.tracelink.rp902app.domain.judgement.ReadJudgementService
+import jp.co.terumo.tracelink.rp902app.domain.log.EventLogStore
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderRuntimeStateRepository
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderSettings
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderSettingsRepository
+import jp.co.terumo.tracelink.rp902app.domain.readresult.PendingWriteQueue
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultBundleFactory
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRepository
+import jp.co.terumo.tracelink.rp902app.domain.rule.RuleRepository
+import jp.co.terumo.tracelink.rp902app.domain.work.WorkContextRepository
 
 /**
- * アプリ全体で使う依存関係を組み立てる手動 DI コンテナ。
+ * アプリ全体の依存を組み立てる手動 DI container。
  *
- * 現在は小さな実装 slice のため DI framework は導入せず、ここで Repository や Gateway を作る。
- * `ReaderSettings()` の既定 gateway mode は fake reader なので、実機 RP902 がない環境でも起動とテストができる。
- * Bluetooth MAC は今回運用の 1 台固定値で初期化されるが、real 接続は明示選択時だけ行う。
- *
- * 将来、PostgreSQL 接続、pending write 永続化、settings 永続化を差し替える場合も、
- * まずこのファイルを見ると app 全体へのつながりを追いやすい。
+ * 現在は fake / in-memory 実装で起動できる構成にしている。
+ * PostgreSQL 接続時は `data.postgres` の repository adapter と実 gateway をここで差し替える。
  */
 class AppContainer(
     initialReaderSettings: ReaderSettings = ReaderSettings(),
@@ -27,19 +39,30 @@ class AppContainer(
     )
     private val readerRuntimeStateRepository = InMemoryReaderRuntimeStateRepository()
 
+    private val workContextRepository: WorkContextRepository = FakeWorkContextRepository()
+    private val ruleRepository: RuleRepository = FakeRuleRepository()
+    private val equipmentMasterRepository: EquipmentMasterRepository = FakeEquipmentMasterRepository()
+    private val readJudgementService: ReadJudgementService = SimpleReadJudgementService()
+    private val readResultBundleFactory: ReadResultBundleFactory = DefaultReadResultBundleFactory()
+    private val readResultRepository: ReadResultRepository = FakeReadResultRepository()
+    private val pendingWriteQueue: PendingWriteQueue = InMemoryPendingWriteQueue()
+    private val eventLogStore: EventLogStore = InMemoryEventLogStore()
+
     fun readerSettingsRepository(): ReaderSettingsRepository = readerSettingsRepository
     fun readerRuntimeStateRepository(): ReaderRuntimeStateRepository = readerRuntimeStateRepository
 
-    /**
-     * Inventory 機能の root repository を作る。
-     *
-     * UI や ViewModel は fake/real の詳細を知らず、ここで作る `ConfigurableReaderGateway` が
-     * Settings の値に応じて実際の reader 実装を切り替える。
-     */
     fun inventoryRepository(): InventoryRepository = DefaultInventoryRepository(
         readerGateway = ConfigurableReaderGateway(
             settingsRepository = readerSettingsRepository,
             runtimeStateRepository = readerRuntimeStateRepository,
         ),
+        workContextRepository = workContextRepository,
+        ruleRepository = ruleRepository,
+        equipmentMasterRepository = equipmentMasterRepository,
+        readJudgementService = readJudgementService,
+        readResultBundleFactory = readResultBundleFactory,
+        readResultRepository = readResultRepository,
+        pendingWriteQueue = pendingWriteQueue,
+        eventLogStore = eventLogStore,
     )
 }
