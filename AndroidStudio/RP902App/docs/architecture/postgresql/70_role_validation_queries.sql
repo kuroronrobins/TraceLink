@@ -24,6 +24,20 @@ select
     not has_table_privilege('tracelink_android_app', 'tracelink_internal.device_registry', 'SELECT') as passed;
 
 select
+    'android_lacks_internal_table_insert_update_delete' as check_name,
+    not has_table_privilege('tracelink_android_app', 'tracelink_internal.device_registry', 'INSERT')
+        and not has_table_privilege('tracelink_android_app', 'tracelink_internal.device_registry', 'UPDATE')
+        and not has_table_privilege('tracelink_android_app', 'tracelink_internal.device_registry', 'DELETE') as passed;
+
+select
+    'android_lacks_internal_helper_execute' as check_name,
+    not has_function_privilege(
+        'tracelink_android_app',
+        'tracelink_internal.fn_epoch_millis()',
+        'EXECUTE'
+    ) as passed;
+
+select
     'android_can_execute_get_active_work_context' as check_name,
     has_function_privilege(
         'tracelink_android_app',
@@ -68,8 +82,43 @@ select
 
 select
     p.proname as function_name,
+    owner_role.rolname as owner_role,
     p.prosecdef as security_definer,
     p.proconfig as function_settings
+from pg_proc p
+join pg_namespace n
+    on n.oid = p.pronamespace
+join pg_roles owner_role
+    on owner_role.oid = p.proowner
+where n.nspname = 'api'
+    and p.proname in (
+        'fn_get_active_work_context',
+        'fn_get_rule_bundle',
+        'fn_get_equipment_snapshot',
+        'fn_register_read_result_bundle'
+    )
+order by p.proname;
+
+select
+    'api_functions_owned_by_api_owner' as check_name,
+    count(*) = 4 as passed
+from pg_proc p
+join pg_namespace n
+    on n.oid = p.pronamespace
+join pg_roles owner_role
+    on owner_role.oid = p.proowner
+where n.nspname = 'api'
+    and p.proname in (
+        'fn_get_active_work_context',
+        'fn_get_rule_bundle',
+        'fn_get_equipment_snapshot',
+        'fn_register_read_result_bundle'
+    )
+    and owner_role.rolname = 'tracelink_api_owner';
+
+select
+    'api_functions_are_security_definer' as check_name,
+    count(*) = 4 as passed
 from pg_proc p
 join pg_namespace n
     on n.oid = p.pronamespace
@@ -80,7 +129,22 @@ where n.nspname = 'api'
         'fn_get_equipment_snapshot',
         'fn_register_read_result_bundle'
     )
-order by p.proname;
+    and p.prosecdef;
+
+select
+    'api_functions_have_fixed_search_path' as check_name,
+    count(*) = 4 as passed
+from pg_proc p
+join pg_namespace n
+    on n.oid = p.pronamespace
+where n.nspname = 'api'
+    and p.proname in (
+        'fn_get_active_work_context',
+        'fn_get_rule_bundle',
+        'fn_get_equipment_snapshot',
+        'fn_register_read_result_bundle'
+    )
+    and p.proconfig @> array['search_path=pg_catalog, public, api, tracelink_internal'];
 
 set role tracelink_android_app;
 

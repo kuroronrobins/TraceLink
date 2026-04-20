@@ -202,6 +202,8 @@ Note: normal schema prevents multiple active contexts by unique partial index. T
 | Android role has `EXECUTE` on all four `api.fn_*` | true |
 | Android role has `USAGE` on `tracelink_internal` | false |
 | Android role can `SELECT` internal tables | false |
+| Android role can `INSERT` / `UPDATE` / `DELETE` internal tables | false |
+| Android role can execute `tracelink_internal` helper functions | false |
 | public has `CREATE` on `public` schema | false |
 | public has execute on `tracelink_internal` helpers | false |
 | `api.fn_*` owner | specialized owner role, not Android login |
@@ -228,31 +230,28 @@ Note: normal schema prevents multiple active contexts by unique partial index. T
 Current state:
 
 - `AppContainer` supports `DataAccessMode.Postgres`.
-- `MainActivity` still constructs `AppContainer()` with fake data access by default.
+- `MainActivity` uses `AppContainerFactory`; fake data access remains the default.
+- debug build can opt in to PostgreSQL smoke mode with Gradle properties.
 - There is no runtime UI switch for PostgreSQL mode yet.
 
-Therefore, Android live smoke requires a temporary debug-only wiring or an instrumentation harness that constructs:
+Android live smoke uses the debug-only wiring below:
 
-```kotlin
-AppContainer(
-    dataAccessMode = DataAccessMode.Postgres,
-    postgresConnectionSettings = PostgresConnectionSettings(
-        host = "<db-host>",
-        port = 55432,
-        databaseName = "tracelink_smoke",
-        username = "tracelink_android_app",
-        password = "<not-in-source-control>",
-        sslMode = PostgresSslMode.Disable,
-    ),
-    registrationEnvironment = RegistrationEnvironment(
-        deviceId = "android-local-device",
-        readerType = "RP902",
-    ),
-)
+```powershell
+.\gradlew.bat :app:installDebug `
+  "-PtracelinkPostgresSmoke=true" `
+  "-PtracelinkPostgresHost=10.0.2.2" `
+  "-PtracelinkPostgresPort=55432" `
+  "-PtracelinkPostgresDatabase=tracelink_smoke" `
+  "-PtracelinkPostgresUsername=tracelink_android_app" `
+  "-PtracelinkPostgresPassword=<local-smoke-password>" `
+  "-PtracelinkPostgresSslMode=Disable" `
+  "-PtracelinkPostgresDeviceId=android-local-device" `
+  "-PtracelinkPostgresReaderType=RP902"
 ```
 
 Use `10.0.2.2` from Android emulator to reach a host-local Docker container.
 Use the host machine LAN IP or VPN-routable DB address from a physical Android device.
+See `POSTGRES_DEBUG_WIRING.md` for the debug-only app wiring details.
 
 ### Android Steps
 

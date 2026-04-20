@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
-import jp.co.terumo.tracelink.rp902app.data.AppContainer
+import jp.co.terumo.tracelink.rp902app.data.AppContainerFactory
 import jp.co.terumo.tracelink.rp902app.ui.app.Rp902App
 import jp.co.terumo.tracelink.rp902app.ui.theme.TraceLink_RP902AppTheme
 import jp.co.terumo.tracelink.rp902app.ui.inventory.InventoryViewModel
@@ -26,8 +26,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         // このアプリではまだ DI framework を入れていないため、
-        // AppContainer が手動 DI の役割を持つ。
-        val appContainer = AppContainer()
+        // AppContainerFactory は通常 fake mode を返し、debug smoke だけ PostgreSQL mode に切り替える。
+        val appContainer = AppContainerFactory.create()
         val inventoryViewModel = ViewModelProvider(
             this,
             InventoryViewModelFactory(appContainer.inventoryRepository()),

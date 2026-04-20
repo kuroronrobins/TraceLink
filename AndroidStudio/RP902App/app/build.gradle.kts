@@ -7,6 +7,21 @@ val unitechRuntimeDir = rootProject.file("vendor/unitech/runtime")
 val unitechRfidAar = unitechRuntimeDir.resolve("unitechRFID_v1.0.41.aar")
 val unitechDeviceSdkJar = unitechRuntimeDir.resolve("UnitechSDK_1.2.19.jar")
 
+fun buildConfigString(value: String): String =
+    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val postgresSmokeEnabled = providers.gradleProperty("tracelinkPostgresSmoke")
+    .map { it.equals("true", ignoreCase = true) }
+    .getOrElse(false)
+val postgresSmokeHost = providers.gradleProperty("tracelinkPostgresHost").getOrElse("10.0.2.2")
+val postgresSmokePort = providers.gradleProperty("tracelinkPostgresPort").getOrElse("55432").toInt()
+val postgresSmokeDatabase = providers.gradleProperty("tracelinkPostgresDatabase").getOrElse("tracelink_smoke")
+val postgresSmokeUsername = providers.gradleProperty("tracelinkPostgresUsername").getOrElse("tracelink_android_app")
+val postgresSmokePassword = providers.gradleProperty("tracelinkPostgresPassword").getOrElse("")
+val postgresSmokeSslMode = providers.gradleProperty("tracelinkPostgresSslMode").getOrElse("Disable")
+val postgresSmokeDeviceId = providers.gradleProperty("tracelinkPostgresDeviceId").getOrElse("android-local-device")
+val postgresSmokeReaderType = providers.gradleProperty("tracelinkPostgresReaderType").getOrElse("RP902")
+
 check(unitechRfidAar.isFile) {
     "Missing Unitech runtime AAR: ${unitechRfidAar.path}"
 }
@@ -29,8 +44,28 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "POSTGRES_SMOKE_ENABLED", postgresSmokeEnabled.toString())
+            buildConfigField("String", "POSTGRES_SMOKE_HOST", buildConfigString(postgresSmokeHost))
+            buildConfigField("int", "POSTGRES_SMOKE_PORT", postgresSmokePort.toString())
+            buildConfigField("String", "POSTGRES_SMOKE_DATABASE", buildConfigString(postgresSmokeDatabase))
+            buildConfigField("String", "POSTGRES_SMOKE_USERNAME", buildConfigString(postgresSmokeUsername))
+            buildConfigField("String", "POSTGRES_SMOKE_PASSWORD", buildConfigString(postgresSmokePassword))
+            buildConfigField("String", "POSTGRES_SMOKE_SSL_MODE", buildConfigString(postgresSmokeSslMode))
+            buildConfigField("String", "POSTGRES_SMOKE_DEVICE_ID", buildConfigString(postgresSmokeDeviceId))
+            buildConfigField("String", "POSTGRES_SMOKE_READER_TYPE", buildConfigString(postgresSmokeReaderType))
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("boolean", "POSTGRES_SMOKE_ENABLED", "false")
+            buildConfigField("String", "POSTGRES_SMOKE_HOST", buildConfigString(""))
+            buildConfigField("int", "POSTGRES_SMOKE_PORT", "5432")
+            buildConfigField("String", "POSTGRES_SMOKE_DATABASE", buildConfigString(""))
+            buildConfigField("String", "POSTGRES_SMOKE_USERNAME", buildConfigString(""))
+            buildConfigField("String", "POSTGRES_SMOKE_PASSWORD", buildConfigString(""))
+            buildConfigField("String", "POSTGRES_SMOKE_SSL_MODE", buildConfigString("Require"))
+            buildConfigField("String", "POSTGRES_SMOKE_DEVICE_ID", buildConfigString("android-local-device"))
+            buildConfigField("String", "POSTGRES_SMOKE_READER_TYPE", buildConfigString("RP902"))
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -44,6 +79,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }

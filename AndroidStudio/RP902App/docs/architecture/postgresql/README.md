@@ -35,6 +35,8 @@ Android 用 least-privilege role は、SQL 実装を適用してから `60_role_
 | `70_role_validation_queries.sql` | Android role が `api.fn_*` だけ使えることを確認する query |
 | `compose.postgres-smoke.yml` | local smoke test 用 PostgreSQL container |
 | `VALIDATION_PLAN.md` | DB / role / Android smoke test の手順と期待結果 |
+| `POSTGRES_DEBUG_WIRING.md` | Android debug build で PostgreSQL smoke mode を有効化する手順 |
+| `SMOKE_TEST_RESULT.md` | 2026-04-21 時点の実行結果と未実行理由 |
 
 ## Internal Storage Summary
 
@@ -109,3 +111,13 @@ PostgreSQL の `jsonb` は object key order を正規化するため、JSON obje
 - `SECURITY DEFINER` を使うため、production では `public` schema の `CREATE` 権限を明示的に revoke する。
 - `pgcrypto` extension の有効化は managed PostgreSQL の権限設計に合わせて事前確認する。
 - rule / equipment import の本番 ETL は別途設計する。
+
+## DBA Review Notes
+
+- `60_role_hardening_template.sql` の role 名は smoke 用の既定値である。本番では DBA が命名規則に合わせて置換してよい。
+- Android login role は object owner にしない。
+- `SECURITY DEFINER` owner は Android login とは別の専用 role にする。
+- Android login role には `api` schema usage と `api.fn_*` execute だけを付与する。
+- `tracelink_internal` への direct `select` / `insert` / `update` / `delete` / helper execute は付与しない。
+- `public` schema の `CREATE` は revoke する。`pgcrypto` が `public` にある環境では特に重要である。
+- `api.fn_*` の `search_path` は `30_api_functions.sql` の固定値から変更しない。

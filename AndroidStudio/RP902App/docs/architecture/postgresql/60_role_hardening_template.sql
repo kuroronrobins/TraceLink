@@ -6,23 +6,29 @@
 --   20_helpers.sql
 --   30_api_functions.sql
 --
--- This file uses deterministic role names for local smoke testing:
+-- This file uses deterministic role names for local smoke testing and DBA review:
 --   tracelink_api_owner
 --   tracelink_android_app
 --
 -- Production DBAs may replace these names, but the privilege shape should stay the same:
 -- Android gets api schema usage and api.fn_* execute only.
+--
+-- Ownership model:
+--   tracelink_api_owner:
+--     Owns api functions and internal storage. It should not be used by Android.
+--   tracelink_android_app:
+--     Login role used by Android. It should not own database objects.
 
 begin;
 
 do $$
 begin
     if not exists (select 1 from pg_roles where rolname = 'tracelink_api_owner') then
-        execute 'create role tracelink_api_owner noinherit';
+        execute 'create role tracelink_api_owner nologin noinherit';
     end if;
 
     if not exists (select 1 from pg_roles where rolname = 'tracelink_android_app') then
-        execute 'create role tracelink_android_app login';
+        execute 'create role tracelink_android_app login noinherit';
     end if;
 end;
 $$;
@@ -30,14 +36,20 @@ $$;
 -- SECURITY DEFINER functions are safer when untrusted users cannot create objects in public.
 revoke create on schema public from public;
 
+-- Remove broad or accidental grants before applying the narrow Android grant shape below.
 revoke all on schema api from public;
+revoke all on schema api from tracelink_android_app;
 revoke all on schema tracelink_internal from public;
 revoke all on schema tracelink_internal from tracelink_android_app;
 
 revoke all on all tables in schema tracelink_internal from public;
+revoke all on all tables in schema tracelink_internal from tracelink_android_app;
 revoke all on all sequences in schema tracelink_internal from public;
+revoke all on all sequences in schema tracelink_internal from tracelink_android_app;
 revoke execute on all functions in schema api from public;
+revoke execute on all functions in schema api from tracelink_android_app;
 revoke execute on all functions in schema tracelink_internal from public;
+revoke execute on all functions in schema tracelink_internal from tracelink_android_app;
 
 alter schema api owner to tracelink_api_owner;
 alter schema tracelink_internal owner to tracelink_api_owner;
@@ -104,5 +116,12 @@ grant execute on function api.fn_register_read_result_bundle(jsonb) to tracelink
 -- Set a password or external authentication outside source control.
 -- Example for local-only smoke testing:
 -- alter role tracelink_android_app with password '<local smoke password>';
+--
+-- DBA review notes:
+-- - Do not grant tracelink_android_app direct privileges on tracelink_internal.
+-- - Do not make tracelink_android_app the owner of SECURITY DEFINER functions.
+-- - Keep api.fn_* search_path fixed in 30_api_functions.sql.
+-- - If pgcrypto is installed in public, keep CREATE revoked from public.
+-- - Prefer certificate or managed secret distribution for production credentials.
 
 commit;
