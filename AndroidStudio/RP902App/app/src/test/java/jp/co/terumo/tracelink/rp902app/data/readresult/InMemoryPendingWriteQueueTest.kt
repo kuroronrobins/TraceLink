@@ -1,31 +1,31 @@
-package jp.co.terumo.tracelink.rp902app.data.upload
+package jp.co.terumo.tracelink.rp902app.data.readresult
 
-import jp.co.terumo.tracelink.rp902app.domain.upload.InventoryUploadPayload
-import jp.co.terumo.tracelink.rp902app.domain.upload.InventoryUploadTag
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultTag
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class InMemoryUploadRetryQueueTest {
+class InMemoryPendingWriteQueueTest {
     @Test
-    fun enqueueFailure_addsPendingUploadAndDeduplicatesBySessionId() = runBlocking {
-        val queue = InMemoryUploadRetryQueue()
-        val payload = payload(sessionId = "session-1")
+    fun enqueueFailure_addsPendingWriteAndDeduplicatesBySessionId() = runBlocking {
+        val queue = InMemoryPendingWriteQueue()
+        val bundle = bundle(sessionId = "session-1")
 
         queue.enqueueFailure(
-            payload = payload,
+            bundle = bundle,
             failedAtEpochMillis = 1000L,
             message = "network down",
         )
         queue.enqueueFailure(
-            payload = payload,
+            bundle = bundle,
             failedAtEpochMillis = 2000L,
             message = "still down",
         )
 
-        val pending = queue.pendingUploads.value.single()
+        val pending = queue.pendingWrites.value.single()
 
-        assertEquals(1, queue.pendingUploads.value.size)
+        assertEquals(1, queue.pendingWrites.value.size)
         assertEquals("session-1", pending.id)
         assertEquals(1000L, pending.queuedAtEpochMillis)
         assertEquals(2000L, pending.lastAttemptAtEpochMillis)
@@ -34,26 +34,26 @@ class InMemoryUploadRetryQueueTest {
     }
 
     @Test
-    fun remove_removesQueuedPayload() = runBlocking {
-        val queue = InMemoryUploadRetryQueue()
+    fun remove_removesQueuedBundle() = runBlocking {
+        val queue = InMemoryPendingWriteQueue()
 
         queue.enqueueFailure(
-            payload = payload(sessionId = "session-1"),
+            bundle = bundle(sessionId = "session-1"),
             failedAtEpochMillis = 1000L,
             message = "network down",
         )
         queue.remove("session-1")
 
-        assertEquals(emptyList<Any>(), queue.pendingUploads.value)
+        assertEquals(emptyList<Any>(), queue.pendingWrites.value)
     }
 
-    private fun payload(sessionId: String): InventoryUploadPayload = InventoryUploadPayload(
+    private fun bundle(sessionId: String): ReadResultRegistrationBundle = ReadResultRegistrationBundle(
         sessionId = sessionId,
-        sentAtEpochMillis = 900L,
+        registeredAtEpochMillis = 900L,
         deviceId = "device-1",
         readerType = "RP902",
         tags = listOf(
-            InventoryUploadTag(
+            ReadResultTag(
                 epc = "E2806894000040035A1F90A1",
                 firstSeenAtEpochMillis = 100L,
                 lastSeenAtEpochMillis = 200L,

@@ -16,7 +16,7 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderSettingsRepository
  * `ReaderSettings()` の既定 gateway mode は fake reader なので、実機 RP902 がない環境でも起動とテストができる。
  * Bluetooth MAC は今回運用の 1 台固定値で初期化されるが、real 接続は明示選択時だけ行う。
  *
- * 将来、upload 実装、retry queue 永続化、settings 永続化を差し替える場合も、
+ * 将来、PostgreSQL 接続、pending write 永続化、settings 永続化を差し替える場合も、
  * まずこのファイルを見ると app 全体へのつながりを追いやすい。
  */
 class AppContainer(

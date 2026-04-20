@@ -76,20 +76,20 @@ class InventorySessionTest {
     }
 
     @Test
-    fun toUploadPayload_usesCurrentSessionTags() {
+    fun toRegistrationBundle_usesCurrentSessionTags() {
         val session = InventorySession()
         session.record(ReaderTagRead(epc = "E2806894000040035A1F90A1", seenAtEpochMillis = 1000L))
         session.record(ReaderTagRead(epc = "E2806894000040035A1F90A1", seenAtEpochMillis = 2000L))
 
-        val payload = session.toUploadPayload(
+        val bundle = session.toRegistrationBundle(
             sessionId = "session-1",
-            sentAtEpochMillis = 3000L,
+            registeredAtEpochMillis = 3000L,
             deviceId = "device-1",
             readerType = "RP902",
         )
 
-        assertEquals("session-1", payload.sessionId)
-        assertEquals(1, payload.tags.size)
-        assertEquals(2, payload.tags.single().readCount)
+        assertEquals("session-1", bundle.sessionId)
+        assertEquals(1, bundle.tags.size)
+        assertEquals(2, bundle.tags.single().readCount)
     }
 }

@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
  * Inventory 画面用の ViewModel。
  *
  * Repository が持つ domain/data state を、画面が表示しやすい `InventoryUiState` に投影する。
- * ボタン操作はここで coroutine に乗せて Repository へ渡すが、reader SDK や upload transport の
+ * ボタン操作はここで coroutine に乗せて Repository へ渡すが、reader SDK や結果登録先の
  * 詳細は扱わない。これにより Composable は状態表示と callback 通知だけに集中できる。
  */
 class InventoryViewModel(
@@ -59,15 +59,15 @@ class InventoryViewModel(
         }
     }
 
-    fun uploadSession() {
+    fun registerCurrentSessionResults() {
         runRepositoryCommand {
-            inventoryRepository.uploadSession()
+            inventoryRepository.registerCurrentSessionResults()
         }
     }
 
-    fun retryPendingUploads() {
+    fun retryPendingWrites() {
         runRepositoryCommand {
-            inventoryRepository.retryPendingUploads()
+            inventoryRepository.retryPendingWrites()
         }
     }
 
@@ -86,13 +86,13 @@ class InventoryViewModel(
 }
 
 // UI state は repository state の「表示用コピー」。
-// ここで upload pending 件数など、画面で扱いやすい形に変換する。
+// ここで pending write 件数など、画面で扱いやすい形に変換する。
 private fun InventoryRepositoryState.toUiState(): InventoryUiState = InventoryUiState(
     connectionState = connectionState,
     isInventoryRunning = isInventoryRunning,
     tags = tags,
-    uploadState = uploadState,
-    pendingUploadCount = pendingUploads.size,
+    registrationState = registrationState,
+    pendingWriteCount = pendingWrites.size,
     logs = logs,
 )
 

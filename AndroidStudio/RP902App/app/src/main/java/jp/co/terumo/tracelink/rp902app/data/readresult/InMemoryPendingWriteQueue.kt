@@ -1,35 +1,35 @@
-package jp.co.terumo.tracelink.rp902app.data.upload
+package jp.co.terumo.tracelink.rp902app.data.readresult
 
-import jp.co.terumo.tracelink.rp902app.domain.upload.InventoryUploadPayload
-import jp.co.terumo.tracelink.rp902app.domain.upload.PendingUpload
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadRetryQueue
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
+import jp.co.terumo.tracelink.rp902app.domain.readresult.PendingWrite
+import jp.co.terumo.tracelink.rp902app.domain.readresult.PendingWriteQueue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * upload 失敗 payload をメモリ上に保持する retry queue。
+ * 結果登録に失敗した bundle をメモリ上に保持する pending write queue。
  *
  * アプリ再起動で消えるため production 向け永続化ではない。契約を分けているので、
- * 長期運用ではこの class を DataStore/Room などの実装に差し替える。
+ * 長期運用ではこの class を Room などの実装に差し替える。
  */
-class InMemoryUploadRetryQueue : UploadRetryQueue {
-    private val _pendingUploads = MutableStateFlow<List<PendingUpload>>(emptyList())
-    override val pendingUploads: StateFlow<List<PendingUpload>> = _pendingUploads.asStateFlow()
+class InMemoryPendingWriteQueue : PendingWriteQueue {
+    private val _pendingWrites = MutableStateFlow<List<PendingWrite>>(emptyList())
+    override val pendingWrites: StateFlow<List<PendingWrite>> = _pendingWrites.asStateFlow()
 
     override suspend fun enqueueFailure(
-        payload: InventoryUploadPayload,
+        bundle: ReadResultRegistrationBundle,
         failedAtEpochMillis: Long,
         message: String,
     ) {
         // sessionId を local de-duplication key として扱う。
         // 同じ session の再失敗は queue entry を増やさず attemptCount を更新する。
-        val pendingUploadId = payload.sessionId
-        _pendingUploads.update { current ->
-            if (current.any { pending -> pending.id == pendingUploadId }) {
+        val pendingWriteId = bundle.sessionId
+        _pendingWrites.update { current ->
+            if (current.any { pending -> pending.id == pendingWriteId }) {
                 current.map { pending ->
-                    if (pending.id == pendingUploadId) {
+                    if (pending.id == pendingWriteId) {
                         pending.copy(
                             lastAttemptAtEpochMillis = failedAtEpochMillis,
                             attemptCount = pending.attemptCount + 1,
@@ -40,9 +40,9 @@ class InMemoryUploadRetryQueue : UploadRetryQueue {
                     }
                 }
             } else {
-                current + PendingUpload(
-                    id = pendingUploadId,
-                    payload = payload,
+                current + PendingWrite(
+                    id = pendingWriteId,
+                    bundle = bundle,
                     queuedAtEpochMillis = failedAtEpochMillis,
                     lastAttemptAtEpochMillis = failedAtEpochMillis,
                     attemptCount = 1,
@@ -53,13 +53,13 @@ class InMemoryUploadRetryQueue : UploadRetryQueue {
     }
 
     override suspend fun markAttemptFailed(
-        pendingUploadId: String,
+        pendingWriteId: String,
         failedAtEpochMillis: Long,
         message: String,
     ) {
-        _pendingUploads.update { current ->
+        _pendingWrites.update { current ->
             current.map { pending ->
-                if (pending.id == pendingUploadId) {
+                if (pending.id == pendingWriteId) {
                     pending.copy(
                         lastAttemptAtEpochMillis = failedAtEpochMillis,
                         attemptCount = pending.attemptCount + 1,
@@ -72,13 +72,13 @@ class InMemoryUploadRetryQueue : UploadRetryQueue {
         }
     }
 
-    override suspend fun remove(pendingUploadId: String) {
-        _pendingUploads.update { current ->
-            current.filterNot { pending -> pending.id == pendingUploadId }
+    override suspend fun remove(pendingWriteId: String) {
+        _pendingWrites.update { current ->
+            current.filterNot { pending -> pending.id == pendingWriteId }
         }
     }
 
     override suspend fun clear() {
-        _pendingUploads.value = emptyList()
+        _pendingWrites.value = emptyList()
     }
 }

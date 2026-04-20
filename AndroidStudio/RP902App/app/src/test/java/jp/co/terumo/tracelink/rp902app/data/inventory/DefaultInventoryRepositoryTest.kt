@@ -1,7 +1,7 @@
 package jp.co.terumo.tracelink.rp902app.data.inventory
 
 import jp.co.terumo.tracelink.rp902app.data.log.InMemoryEventLogStore
-import jp.co.terumo.tracelink.rp902app.data.upload.InMemoryUploadRetryQueue
+import jp.co.terumo.tracelink.rp902app.data.readresult.InMemoryPendingWriteQueue
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogCategory
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderConnectionState
@@ -9,10 +9,10 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGateway
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEvent
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEventLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
-import jp.co.terumo.tracelink.rp902app.domain.upload.InventoryUploadPayload
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadRepository
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadResult
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadState
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRepository
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationResult
+import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -79,32 +79,32 @@ class DefaultInventoryRepositoryTest {
     }
 
     @Test
-    fun uploadFailure_setsFailedStateAndQueuesPayloadForRetry() = runBlocking {
+    fun resultRegistrationFailure_setsFailedStateAndQueuesPendingWrite() = runBlocking {
         val readerGateway = ManualReaderGateway()
-        val uploadRepository = RecordingUploadRepository(
-            results = mutableListOf(UploadResult.Failure("network down")),
+        val readResultRepository = RecordingReadResultRepository(
+            results = mutableListOf(ReadResultRegistrationResult.Failure("network down")),
         )
         val repository = repository(
             readerGateway = readerGateway,
-            uploadRepository = uploadRepository,
+            readResultRepository = readResultRepository,
         )
 
         try {
             readerGateway.emitTag("E2806894000040035A1F90A1", 1000L)
             settle()
 
-            repository.uploadSession()
+            repository.registerCurrentSessionResults()
             settle()
 
             val state = repository.state.value
-            val uploadState = state.uploadState
+            val registrationState = state.registrationState
 
-            assertTrue(uploadState is UploadState.Failed)
-            assertEquals("network down", (uploadState as UploadState.Failed).message)
-            assertEquals(1, state.pendingUploads.size)
-            assertEquals("session-1", state.pendingUploads.single().payload.sessionId)
-            assertEquals(1, state.pendingUploads.single().attemptCount)
-            assertEquals(1, uploadRepository.payloads.size)
+            assertTrue(registrationState is RegistrationState.Failed)
+            assertEquals("network down", (registrationState as RegistrationState.Failed).message)
+            assertEquals(1, state.pendingWrites.size)
+            assertEquals("session-1", state.pendingWrites.single().bundle.sessionId)
+            assertEquals(1, state.pendingWrites.single().attemptCount)
+            assertEquals(1, readResultRepository.bundles.size)
         } finally {
             repository.close()
         }
@@ -137,34 +137,34 @@ class DefaultInventoryRepositoryTest {
     }
 
     @Test
-    fun retryPendingUploads_sendsQueuedPayloadAndClearsQueueOnSuccess() = runBlocking {
+    fun retryPendingWrites_registersQueuedBundleAndClearsQueueOnSuccess() = runBlocking {
         val readerGateway = ManualReaderGateway()
-        val uploadRepository = RecordingUploadRepository(
+        val readResultRepository = RecordingReadResultRepository(
             results = mutableListOf(
-                UploadResult.Failure("network down"),
-                UploadResult.Success,
+                ReadResultRegistrationResult.Failure("network down"),
+                ReadResultRegistrationResult.Success,
             ),
         )
         val repository = repository(
             readerGateway = readerGateway,
-            uploadRepository = uploadRepository,
+            readResultRepository = readResultRepository,
         )
 
         try {
             readerGateway.emitTag("E2806894000040035A1F90A1", 1000L)
             settle()
-            repository.uploadSession()
+            repository.registerCurrentSessionResults()
             settle()
 
-            repository.retryPendingUploads()
+            repository.retryPendingWrites()
             settle()
 
             val state = repository.state.value
 
-            assertEquals(2, uploadRepository.payloads.size)
-            assertEquals("session-1", uploadRepository.payloads[1].sessionId)
-            assertEquals(emptyList<Any>(), state.pendingUploads)
-            assertEquals(UploadState.Completed("session-1"), state.uploadState)
+            assertEquals(2, readResultRepository.bundles.size)
+            assertEquals("session-1", readResultRepository.bundles[1].sessionId)
+            assertEquals(emptyList<Any>(), state.pendingWrites)
+            assertEquals(RegistrationState.Completed("session-1"), state.registrationState)
         } finally {
             repository.close()
         }
@@ -172,11 +172,11 @@ class DefaultInventoryRepositoryTest {
 
     private fun repository(
         readerGateway: ReaderGateway,
-        uploadRepository: UploadRepository = RecordingUploadRepository(),
+        readResultRepository: ReadResultRepository = RecordingReadResultRepository(),
     ): DefaultInventoryRepository = DefaultInventoryRepository(
         readerGateway = readerGateway,
-        uploadRepository = uploadRepository,
-        uploadRetryQueue = InMemoryUploadRetryQueue(),
+        readResultRepository = readResultRepository,
+        pendingWriteQueue = InMemoryPendingWriteQueue(),
         eventLogStore = InMemoryEventLogStore(),
         clock = IncrementingClock(startAtEpochMillis = 10_000L)::now,
         sessionIdFactory = { "session-1" },
@@ -236,15 +236,15 @@ class DefaultInventoryRepositoryTest {
         }
     }
 
-    private class RecordingUploadRepository(
-        private val results: MutableList<UploadResult> = mutableListOf(UploadResult.Success),
-    ) : UploadRepository {
-        val payloads = mutableListOf<InventoryUploadPayload>()
+    private class RecordingReadResultRepository(
+        private val results: MutableList<ReadResultRegistrationResult> = mutableListOf(ReadResultRegistrationResult.Success),
+    ) : ReadResultRepository {
+        val bundles = mutableListOf<ReadResultRegistrationBundle>()
 
-        override suspend fun upload(payload: InventoryUploadPayload): UploadResult {
-            payloads += payload
+        override suspend fun register(bundle: ReadResultRegistrationBundle): ReadResultRegistrationResult {
+            bundles += bundle
             return if (results.isEmpty()) {
-                UploadResult.Success
+                ReadResultRegistrationResult.Success
             } else {
                 results.removeAt(0)
             }

@@ -5,11 +5,15 @@
 1. Launch the app.
 2. Check RP902 connection state.
 3. Connect the reader.
-4. Start inventory.
-5. Confirm EPC values in the live list.
-6. Stop inventory when needed.
-7. Upload the session result.
-8. Confirm success or failure.
+4. Confirm work context.
+5. Fetch rule bundle and equipment snapshot.
+6. Start inventory.
+7. Confirm EPC values in the live list.
+8. Stop inventory when needed.
+9. Run local judgement.
+10. Register the read result bundle to PostgreSQL.
+11. Confirm success or failure.
+12. XCgate reads final results from PostgreSQL.
 
 ## Connection States
 
@@ -24,16 +28,15 @@
 - Continuous reads from the reader gateway.
 - Duplicate EPC values are merged in the current session.
 
-## Upload
+## Result Registration
 
-- Upload happens per session.
+- Registration happens per session.
 - Success is shown as completed.
-- Failure remains retryable.
+- Failure remains retryable as pending write.
 
 ## Logs
 
 - Connection events.
 - Inventory events.
-- Upload events.
+- Result registration events.
 - Errors.
-

@@ -20,7 +20,7 @@ class InMemoryEventLogStoreTest {
         store.append(
             occurredAtEpochMillis = 2000L,
             level = AppLogLevel.Warning,
-            category = AppLogCategory.Upload,
+            category = AppLogCategory.ResultRegistration,
             message = "second",
         )
         store.append(

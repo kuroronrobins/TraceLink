@@ -3,8 +3,8 @@ package jp.co.terumo.tracelink.rp902app.data.inventory
 import java.util.UUID
 import jp.co.terumo.tracelink.rp902app.data.log.InMemoryEventLogStore
 import jp.co.terumo.tracelink.rp902app.data.reader.FakeReaderGateway
-import jp.co.terumo.tracelink.rp902app.data.upload.FakeUploadRepository
-import jp.co.terumo.tracelink.rp902app.data.upload.InMemoryUploadRetryQueue
+import jp.co.terumo.tracelink.rp902app.data.readresult.FakeReadResultRepository
+import jp.co.terumo.tracelink.rp902app.data.readresult.InMemoryPendingWriteQueue
 import jp.co.terumo.tracelink.rp902app.domain.inventory.InventoryRepository
 import jp.co.terumo.tracelink.rp902app.domain.inventory.InventoryRepositoryState
 import jp.co.terumo.tracelink.rp902app.domain.inventory.InventorySession
@@ -16,11 +16,11 @@ import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGateway
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderGatewayEventLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderTagRead
 import jp.co.terumo.tracelink.rp902app.domain.reader.displayText
-import jp.co.terumo.tracelink.rp902app.domain.upload.InventoryUploadPayload
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadRepository
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadResult
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadRetryQueue
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadState
+import jp.co.terumo.tracelink.rp902app.domain.readresult.PendingWriteQueue
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationBundle
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRegistrationResult
+import jp.co.terumo.tracelink.rp902app.domain.readresult.ReadResultRepository
+import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,14 +37,14 @@ import kotlinx.coroutines.launch
 /**
  * Inventory 機能の orchestration 実装。
  *
- * reader からの tag read、session 内重複除去、upload、retry queue、structured log を
- * ここで組み合わせる。vendor SDK の詳細は `ReaderGateway` の内側に、HTTP の詳細は
- * `UploadRepository` の内側に閉じ込めることで、UI はこの repository state だけを見ればよい。
+ * reader からの tag read、session 内重複除去、結果登録、pending write、structured log を
+ * ここで組み合わせる。vendor SDK の詳細は `ReaderGateway` の内側に、PostgreSQL function
+ * の詳細は `ReadResultRepository` の内側に閉じ込めることで、UI は repository state だけを見る。
  */
 class DefaultInventoryRepository(
     private val readerGateway: ReaderGateway = FakeReaderGateway(),
-    private val uploadRepository: UploadRepository = FakeUploadRepository(),
-    private val uploadRetryQueue: UploadRetryQueue = InMemoryUploadRetryQueue(),
+    private val readResultRepository: ReadResultRepository = FakeReadResultRepository(),
+    private val pendingWriteQueue: PendingWriteQueue = InMemoryPendingWriteQueue(),
     private val eventLogStore: EventLogStore = InMemoryEventLogStore(),
     private val inventorySession: InventorySession = InventorySession(),
     private val clock: () -> Long = { System.currentTimeMillis() },
@@ -54,23 +54,22 @@ class DefaultInventoryRepository(
     private val _state = MutableStateFlow(
         InventoryRepositoryState(
             logs = eventLogStore.logs.value,
-            pendingUploads = uploadRetryQueue.pendingUploads.value,
+            pendingWrites = pendingWriteQueue.pendingWrites.value,
         ),
     )
     override val state: StateFlow<InventoryRepositoryState> = _state.asStateFlow()
 
     init {
-        // LogStore / RetryQueue / ReaderGateway の Flow を repository state に集約する。
-        // ここが Inventory 画面と Logs 画面の source of truth になる。
+        // 複数の lower layer Flow を repository state に集約し、UI の source of truth を一本化する。
         eventLogStore.logs
             .onEach { logs ->
                 _state.update { current -> current.copy(logs = logs) }
             }
             .launchIn(scope)
 
-        uploadRetryQueue.pendingUploads
-            .onEach { pendingUploads ->
-                _state.update { current -> current.copy(pendingUploads = pendingUploads) }
+        pendingWriteQueue.pendingWrites
+            .onEach { pendingWrites ->
+                _state.update { current -> current.copy(pendingWrites = pendingWrites) }
             }
             .launchIn(scope)
 
@@ -79,8 +78,7 @@ class DefaultInventoryRepository(
                 _state.update { current ->
                     current.copy(
                         connectionState = connectionState,
-                        // 接続が切れた場合、画面上の inventory running も止める。
-                        // 実機側の stop 完了は gateway log で別途確認する。
+                        // 接続断時に画面だけ Running のまま残らないよう、repository state で止める。
                         isInventoryRunning = current.isInventoryRunning &&
                             connectionState == ReaderConnectionState.Connected,
                     )
@@ -98,8 +96,7 @@ class DefaultInventoryRepository(
             .launchIn(scope)
 
         readerGateway.tagReads
-            // tag read は gateway から非同期に流れてくる。
-            // 重複除去と state 更新は recordRead に閉じ込め、UI からは直接触らない。
+            // tag read は gateway から非同期に流れるため、重複除去と state 更新を repository に閉じ込める。
             .onEach(::recordRead)
             .catch { throwable ->
                 appendLog(
@@ -185,7 +182,7 @@ class DefaultInventoryRepository(
         _state.update { current ->
             current.copy(
                 tags = emptyList(),
-                uploadState = UploadState.Idle,
+                registrationState = RegistrationState.Idle,
             )
         }
         appendLog(
@@ -195,88 +192,85 @@ class DefaultInventoryRepository(
         )
     }
 
-    override suspend fun uploadSession() {
-        // upload は現在の session snapshot を payload 化してから実行する。
-        // 空 session は backend へ送らず、画面に失敗状態として返す。
-        val payload = inventorySession.toUploadPayload(
+    override suspend fun registerCurrentSessionResults() {
+        val bundle = inventorySession.toRegistrationBundle(
             sessionId = sessionIdFactory(),
-            sentAtEpochMillis = clock(),
+            registeredAtEpochMillis = clock(),
             deviceId = "android-local-device",
             readerType = "RP902",
         )
 
-        if (payload.tags.isEmpty()) {
-            val message = "No tags to upload."
-            _state.update { current -> current.copy(uploadState = UploadState.Failed(message)) }
+        if (bundle.tags.isEmpty()) {
+            val message = "No tags to register."
+            _state.update { current -> current.copy(registrationState = RegistrationState.Failed(message)) }
             appendLog(
                 level = AppLogLevel.Warning,
-                category = AppLogCategory.Upload,
+                category = AppLogCategory.ResultRegistration,
                 message = message,
             )
             return
         }
 
-        _state.update { current -> current.copy(uploadState = UploadState.Uploading) }
+        _state.update { current -> current.copy(registrationState = RegistrationState.Registering) }
         appendLog(
             level = AppLogLevel.Info,
-            category = AppLogCategory.Upload,
-            message = "Upload started with ${payload.tags.size} tags.",
+            category = AppLogCategory.ResultRegistration,
+            message = "Result registration started with ${bundle.tags.size} tags.",
         )
 
-        handleUploadResult(
-            payload = payload,
-            result = upload(payload),
+        handleRegistrationResult(
+            bundle = bundle,
+            result = register(bundle),
             queueOnFailure = true,
         )
     }
 
-    override suspend fun retryPendingUploads() {
-        val pendingUploads = uploadRetryQueue.pendingUploads.value
-        if (pendingUploads.isEmpty()) {
+    override suspend fun retryPendingWrites() {
+        val pendingWrites = pendingWriteQueue.pendingWrites.value
+        if (pendingWrites.isEmpty()) {
             appendLog(
                 level = AppLogLevel.Info,
-                category = AppLogCategory.Upload,
-                message = "No queued uploads to retry.",
+                category = AppLogCategory.ResultRegistration,
+                message = "No pending writes to retry.",
             )
             return
         }
 
-        _state.update { current -> current.copy(uploadState = UploadState.Uploading) }
+        _state.update { current -> current.copy(registrationState = RegistrationState.Registering) }
         appendLog(
             level = AppLogLevel.Info,
-            category = AppLogCategory.Upload,
-            message = "Retry started for ${pendingUploads.size} queued uploads.",
+            category = AppLogCategory.ResultRegistration,
+            message = "Retry started for ${pendingWrites.size} pending writes.",
         )
 
         var lastCompletedSessionId: String? = null
         var lastFailureMessage: String? = null
 
-        pendingUploads.forEach { pendingUpload ->
-            // 失敗が残っても他の pending upload は続けて試す。
-            // 長期運用では network/backoff 方針をここから分離する可能性がある。
-            val result = upload(pendingUpload.payload)
+        pendingWrites.forEach { pendingWrite ->
+            // 失敗が残っても他の pending write は続けて試し、現場復旧時の手戻りを減らす。
+            val result = register(pendingWrite.bundle)
             when (result) {
-                UploadResult.Success -> {
-                    uploadRetryQueue.remove(pendingUpload.id)
-                    lastCompletedSessionId = pendingUpload.payload.sessionId
+                ReadResultRegistrationResult.Success -> {
+                    pendingWriteQueue.remove(pendingWrite.id)
+                    lastCompletedSessionId = pendingWrite.bundle.sessionId
                     appendLog(
                         level = AppLogLevel.Info,
-                        category = AppLogCategory.Upload,
-                        message = "Queued upload completed: ${pendingUpload.payload.sessionId}",
+                        category = AppLogCategory.ResultRegistration,
+                        message = "Pending write completed: ${pendingWrite.bundle.sessionId}",
                     )
                 }
 
-                is UploadResult.Failure -> {
+                is ReadResultRegistrationResult.Failure -> {
                     lastFailureMessage = result.message
-                    uploadRetryQueue.markAttemptFailed(
-                        pendingUploadId = pendingUpload.id,
+                    pendingWriteQueue.markAttemptFailed(
+                        pendingWriteId = pendingWrite.id,
                         failedAtEpochMillis = clock(),
                         message = result.message,
                     )
                     appendLog(
                         level = AppLogLevel.Warning,
-                        category = AppLogCategory.Upload,
-                        message = "Queued upload failed: ${result.message}",
+                        category = AppLogCategory.ResultRegistration,
+                        message = "Pending write failed: ${result.message}",
                     )
                 }
             }
@@ -284,8 +278,8 @@ class DefaultInventoryRepository(
 
         _state.update { current ->
             current.copy(
-                uploadState = lastFailureMessage?.let(UploadState::Failed)
-                    ?: UploadState.Completed(lastCompletedSessionId.orEmpty()),
+                registrationState = lastFailureMessage?.let(RegistrationState::Failed)
+                    ?: RegistrationState.Completed(lastCompletedSessionId.orEmpty()),
             )
         }
     }
@@ -296,7 +290,6 @@ class DefaultInventoryRepository(
     }
 
     private suspend fun recordRead(read: ReaderTagRead) {
-        // InventorySession は blank EPC などを拒否することがある。
         // callback 由来の想定外値でアプリ全体を落とさないよう、ログ付きで安全に失敗させる。
         runCatching { inventorySession.record(read) }
             .onSuccess { tags ->
@@ -319,50 +312,50 @@ class DefaultInventoryRepository(
             }
     }
 
-    private suspend fun handleUploadResult(
-        payload: InventoryUploadPayload,
-        result: UploadResult,
+    private suspend fun handleRegistrationResult(
+        bundle: ReadResultRegistrationBundle,
+        result: ReadResultRegistrationResult,
         queueOnFailure: Boolean,
     ) {
-        // upload transport と retry queue を分けておくことで、
-        // 本物 backend と永続 retry storage を別々に差し替えられる。
         when (result) {
-            UploadResult.Success -> {
-                uploadRetryQueue.remove(payload.sessionId)
+            ReadResultRegistrationResult.Success -> {
+                pendingWriteQueue.remove(bundle.sessionId)
                 _state.update { current ->
-                    current.copy(uploadState = UploadState.Completed(payload.sessionId))
+                    current.copy(registrationState = RegistrationState.Completed(bundle.sessionId))
                 }
                 appendLog(
                     level = AppLogLevel.Info,
-                    category = AppLogCategory.Upload,
-                    message = "Upload completed.",
+                    category = AppLogCategory.ResultRegistration,
+                    message = "Result registration completed.",
                 )
             }
 
-            is UploadResult.Failure -> {
+            is ReadResultRegistrationResult.Failure -> {
                 if (queueOnFailure) {
-                    uploadRetryQueue.enqueueFailure(
-                        payload = payload,
+                    pendingWriteQueue.enqueueFailure(
+                        bundle = bundle,
                         failedAtEpochMillis = clock(),
                         message = result.message,
                     )
                 }
                 _state.update { current ->
-                    current.copy(uploadState = UploadState.Failed(result.message))
+                    current.copy(registrationState = RegistrationState.Failed(result.message))
                 }
                 appendLog(
                     level = AppLogLevel.Warning,
-                    category = AppLogCategory.Upload,
-                    message = "Upload failed and queued: ${result.message}",
+                    category = AppLogCategory.ResultRegistration,
+                    message = "Result registration failed and queued: ${result.message}",
                 )
             }
         }
     }
 
-    private suspend fun upload(payload: InventoryUploadPayload): UploadResult =
-        runCatching { uploadRepository.upload(payload) }
+    private suspend fun register(bundle: ReadResultRegistrationBundle): ReadResultRegistrationResult =
+        runCatching { readResultRepository.register(bundle) }
             .getOrElse { throwable ->
-                UploadResult.Failure(throwable.message ?: "Unknown upload error.")
+                ReadResultRegistrationResult.Failure(
+                    throwable.message ?: "Unknown result registration error.",
+                )
             }
 
     private suspend fun runReaderCommand(

@@ -84,7 +84,7 @@ private fun AppLogCategory.displayText(): String = when (this) {
     AppLogCategory.System -> "SYSTEM"
     AppLogCategory.Reader -> "READER"
     AppLogCategory.Inventory -> "INVENTORY"
-    AppLogCategory.Upload -> "UPLOAD"
+    AppLogCategory.ResultRegistration -> "RESULT"
 }
 
 @Preview(showBackground = true)

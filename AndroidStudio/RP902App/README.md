@@ -1,42 +1,50 @@
 # TraceLink RP902 App
 
-TraceLink RP902 App is an Android RFID reader app for the RP902 UHF reader.
+TraceLink RP902 App は、Unitech RP902 で RFID を読み取り、Android 端末内で判定し、PostgreSQL に読取結果を登録する Android アプリです。
 
-## Purpose
+## 現行方針
 
-The app reads RFID tags from RP902, removes duplicate EPC values inside the current inventory session, shows live results, and prepares a session payload for upload to a backend service.
+- 専用中間アプリケーションは置きません。
+- 実行時の主要要素は Android アプリ、PostgreSQL、XCgate です。
+- Android アプリは PostgreSQL から作業対象、帳票ルール、設備マスタを取得します。
+- Android アプリは session 内重複除去と端末内判定を行います。
+- Android アプリは判定済み読取結果を PostgreSQL function 経由で登録します。
+- PostgreSQL は Android 用 View / Function / 制約を持つ整合性ガード層です。
+- XCgate は PostgreSQL の final result view を参照します。
 
 ## App Responsibilities
 
-- Connect to RP902.
-- Start and stop tag inventory.
-- Remove duplicate EPC values per inventory session.
-- Show live inventory results.
-- Prepare upload payloads for the backend.
-- Keep upload failures visible and retryable.
-- Show connection, inventory, upload, and error logs.
-
-## Backend Responsibilities
-
-- Own business rules.
-- Compare reads with equipment/master data.
-- Persist inventory results.
-- Return final judgement or processing result.
+- RP902 へ接続する。
+- RFID inventory を開始・停止する。
+- 同一 session 内の EPC 重複を除去する。
+- PostgreSQL から rule/master/context を取得する差し替え点を持つ。
+- 端末内判定の差し替え点を持つ。
+- 読取結果登録の状態と pending write を見える状態にする。
+- 接続、inventory、結果登録、エラーの構造化ログを表示する。
 
 ## Development Direction
 
 - Kotlin only.
 - Jetpack Compose for new UI.
 - ViewModel + Repository + unidirectional data flow.
-- Keep RP902 vendor SDK code isolated behind an adapter interface.
-- Use an interface plus fake implementation until actual SDK details are known.
-- Validate final RP902 behavior on a real Android device.
+- UI から RP902 vendor SDK や PostgreSQL 接続実装を直接呼ばない。
+- RP902 vendor SDK code は adapter boundary に閉じ込める。
+- PostgreSQL 実接続は View / Function / 制約の契約が固まってから実装する。
+- 実接続前は interface と fake implementation で進める。
+- 最終的な RP902 挙動は実 Android 端末で検証する。
 
 ## Reader Settings
 
 The app still starts in fake reader mode by default. For the current one-reader operation, the RP902 Bluetooth MAC field is prefilled with `DC:0D:30:DA:0F:3C` so hardware testing does not require typing the address every time.
 
 This is only a default value. The Settings screen remains editable, and the MAC address can be changed later if a different RP902 reader is used.
+
+## Architecture Docs
+
+- `docs/architecture/TraceLink_CurrentArchitecture.md`: 現行方針の基準文書。
+- `docs/architecture/PostgreSQLAccessContract.md`: Android と PostgreSQL の View / Function 境界。
+- `docs/architecture/ArchitectureTransitionAudit.md`: 旧方針から新方針への監査と rename map。
+- `docs/architecture/ResponsibilitySeparationPlan.md`: 今後の責務分離案。
 
 ## Vendor SDK Assets
 

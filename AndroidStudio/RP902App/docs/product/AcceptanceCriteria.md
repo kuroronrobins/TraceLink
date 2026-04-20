@@ -18,11 +18,12 @@
 - Connection state is visible.
 - Total unique tag count is visible.
 - EPC list is visible.
-- Upload state is visible.
+- Registration state is visible.
+- Pending write count is visible.
 
-## Upload
+## Result Registration
 
-- Upload action prepares and submits a session payload.
+- Register action prepares and submits a read result registration bundle.
 - Success is shown clearly.
 - Failure remains visible and retryable.
 
@@ -30,6 +31,5 @@
 
 - Connection events are recorded.
 - Inventory events are recorded.
-- Upload events are recorded.
+- Result registration events are recorded.
 - Errors are understandable.
-

@@ -1,143 +1,55 @@
-<mxfile host="65bd71144e">
-    <diagram id="architecture-v2-clean" name="Architecture v2">
-        <mxGraphModel dx="1348" dy="846" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
-            <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="title" value="XC-Gate連携 案3 アーキテクチャ図" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="30" y="20" width="620" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="subtitle" value="判定ロジックはリーダー側、正本データは中央サーバー、XC-Gate は結果表示・保存の受け皿" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#666666;" parent="1" vertex="1">
-                    <mxGeometry x="30" y="52" width="920" height="20" as="geometry"/>
-                </mxCell>
-                <mxCell id="zone_field" value="現場・端末領域" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F7F7;strokeColor=#D0D0D0;strokeWidth=1.5;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;" parent="1" vertex="1">
-                    <mxGeometry x="30" y="100" width="500" height="540" as="geometry"/>
-                </mxCell>
-                <mxCell id="zone_server" value="中央サーバー領域" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F7F7;strokeColor=#D0D0D0;strokeWidth=1.5;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;" parent="1" vertex="1">
-                    <mxGeometry x="567.5" y="100" width="520" height="540" as="geometry"/>
-                </mxCell>
-                <mxCell id="zone_form" value="帳票反映領域" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F7F7;strokeColor=#D0D0D0;strokeWidth=1.5;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;" parent="1" vertex="1">
-                    <mxGeometry x="1110" y="100" width="420" height="540" as="geometry"/>
-                </mxCell>
-                <mxCell id="op" value="作業者" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=16;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="165" width="150" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="xg" value="XC-Gate帳票&lt;br&gt;Surface Pro / ブラウザ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=16;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="295" y="155" width="210" height="95" as="geometry"/>
-                </mxCell>
-                <mxCell id="reader" value="UHFリーダー&lt;br&gt;帳票ID取得 / 一括読取 / 判定実行" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="440" width="320" height="120" as="geometry"/>
-                </mxCell>
-                <mxCell id="server_note" value="中央サーバーの役割&lt;br&gt;・正本マスタを保持&lt;br&gt;・読取結果を集約&lt;br&gt;・外部連携の窓口" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;" parent="1" vertex="1">
-                    <mxGeometry x="755" y="14.5" width="145" height="95" as="geometry"/>
-                </mxCell>
-                <mxCell id="server" value="中央サーバー API / 業務ロジック" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="755" y="155" width="150" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="eqdb" value="設備一覧DB&lt;br&gt;設備名 / 種別 / 有効期限 / 利用可否" style="shape=cylinder3;boundedLbl=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=13;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="600" y="340" width="200" height="110" as="geometry"/>
-                </mxCell>
-                <mxCell id="ruledb" value="帳票ルールDB&lt;br&gt;帳票IDごとの許容 / 必須 / 除外ルール" style="shape=cylinder3;boundedLbl=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=13;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="840" y="350" width="220" height="110" as="geometry"/>
-                </mxCell>
-                <mxCell id="resdb" value="読取結果DB&lt;br&gt;判定結果 / 時刻 / リーダーID / 版情報" style="shape=cylinder3;boundedLbl=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=13;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="720" y="500" width="220" height="110" as="geometry"/>
-                </mxCell>
-                <mxCell id="xccon" value="XC-Connect" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="1230" y="165" width="180" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="save_note" value="帳票反映ステップ&lt;br&gt;取得した読取結果を XC-Gate 帳票へ反映し、そのまま保存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;" parent="1" vertex="1">
-                    <mxGeometry x="1160" y="365" width="300" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="bottom_sep" value="" style="shape=line;html=1;strokeColor=#D0D0D0;strokeWidth=1.5;" parent="1" vertex="1">
-                    <mxGeometry x="30" y="655" width="1500" height="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="legend" value="凡例&lt;br&gt;赤: 現場操作 / 画面遷移&lt;br&gt;青: 結果取得 / 保存 / 反映&lt;br&gt;緑破線: 中央参照" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F8F8;strokeColor=#CCCCCC;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;" parent="1" vertex="1">
-                    <mxGeometry x="30" y="675" width="300" height="105" as="geometry"/>
-                </mxCell>
-                <mxCell id="summary" value="構成の要点&lt;br&gt;・判定ロジックは UHF リーダー側で実行&lt;br&gt;・設備マスタ / 帳票ルール / 読取結果は中央サーバーで一元管理&lt;br&gt;・XC-Connect が中央結果を取得し、XC-Gate 帳票へ橋渡しする" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#CCCCCC;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;" parent="1" vertex="1">
-                    <mxGeometry x="360" y="675" width="660" height="105" as="geometry"/>
-                </mxCell>
-                <mxCell id="open_questions" value="未確定ポイント&lt;br&gt;・帳票IDの渡し方: 画面 QR / NFC / 別方式&lt;br&gt;・読取結果DBのキー設計&lt;br&gt;・XC-Connect の取得タイミング" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;" parent="1" vertex="1">
-                    <mxGeometry x="1050" y="675" width="480" height="105" as="geometry"/>
-                </mxCell>
-                <mxCell id="e1" value="1. 帳票を開く" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=11;strokeColor=#C00000;labelBackgroundColor=#FFFFFF;labelBorderColor=none;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="1" source="op" target="xg" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="e2" value="2. 帳票ID / フィルターIDを取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=11;strokeColor=#C00000;labelBackgroundColor=#FFFFFF;labelBorderColor=none;entryX=0.688;entryY=0.011;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="reader" edge="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="340" y="250" as="sourcePoint"/>
-                        <Array as="points"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="e3" value="3. 工具・設備タグを一括読取" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=11;strokeColor=#C00000;labelBackgroundColor=#FFFFFF;labelBorderColor=none;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="reader" edge="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="90" y="235" as="sourcePoint"/>
-                        <Array as="points">
-                            <mxPoint x="90" y="235"/>
-                            <mxPoint x="90" y="500"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="e45" value="4-5. 帳票ルール / 設備情報を照会" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=11;strokeColor=#38761D;dashed=1;dashPattern=8 8;labelBackgroundColor=#FFFFFF;labelBorderColor=none;exitX=1;exitY=0.35;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="reader" target="server" edge="1">
-                    <mxGeometry x="-0.061" relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="480" y="482"/>
-                            <mxPoint x="480" y="300"/>
-                            <mxPoint x="640" y="300"/>
-                            <mxPoint x="640" y="175"/>
-                        </Array>
-                        <mxPoint as="offset"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="e6" value="6. 判定後の最終結果を保存" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=11;strokeColor=#2F5597;labelBackgroundColor=#FFFFFF;labelBorderColor=none;entryX=0.007;entryY=0.585;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.997;exitY=0.547;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="reader" target="server" edge="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="500" y="506"/>
-                            <mxPoint x="500" y="320"/>
-                            <mxPoint x="660" y="320"/>
-                            <mxPoint x="660" y="202"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="e7" value="7. 読取結果を取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=11;strokeColor=#2F5597;labelBackgroundColor=#FFFFFF;labelBorderColor=none;exitX=0;exitY=0.7;entryX=1;entryY=0.7;" parent="1" source="xccon" target="server" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="e8" value="8. 帳票へ結果反映・保存" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;fontSize=11;strokeColor=#2F5597;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" parent="1" source="xccon" target="xg" edge="1">
-                    <mxGeometry x="-0.2103" relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="1110" y="270"/>
-                            <mxPoint x="540" y="270"/>
-                        </Array>
-                        <mxPoint as="offset"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="e9" value="9. 結果確認" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeWidth=2;fontSize=11;strokeColor=#C00000;dashed=1;dashPattern=8 8;labelBackgroundColor=#FFFFFF;labelBorderColor=none;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" parent="1" source="xg" target="op" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="i1" value="設備一覧参照" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeWidth=1.5;fontSize=10;strokeColor=#999999;labelBackgroundColor=#FFFFFF;labelBorderColor=none;exitX=0.2;exitY=1;entryX=0.5;entryY=0;" parent="1" source="server" target="eqdb" edge="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="785" y="310"/>
-                            <mxPoint x="700" y="310"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="i2" value="帳票ルール参照" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeWidth=1.5;fontSize=10;strokeColor=#999999;labelBackgroundColor=#FFFFFF;labelBorderColor=none;exitX=0.8;exitY=1;entryX=0.5;entryY=0;" parent="1" source="server" target="ruledb" edge="1">
-                    <mxGeometry x="0.002" relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="875" y="310"/>
-                            <mxPoint x="950" y="310"/>
-                        </Array>
-                        <mxPoint as="offset"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="i3" value="結果保存 / 取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;strokeWidth=1.5;fontSize=10;strokeColor=#999999;labelBackgroundColor=#FFFFFF;labelBorderColor=none;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="server" target="resdb" edge="1">
-                    <mxGeometry x="-0.2075" relative="1" as="geometry">
-                        <mxPoint as="offset"/>
-                    </mxGeometry>
-                </mxCell>
-            </root>
-        </mxGraphModel>
-    </diagram>
+<mxfile host="app.diagrams.net" modified="2026-04-20T00:00:00.000Z" agent="Codex" version="24.0.0">
+  <diagram id="tracelink-current-system" name="Current System">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="TraceLink 現行システム構成" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="60" y="40" width="520" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="実行時の主要要素は Android アプリ、PostgreSQL、XCgate。Android が rule/master を取得し、端末内判定後に PostgreSQL function へ登録する。" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontColor=#555555;" parent="1" vertex="1">
+          <mxGeometry x="60" y="80" width="980" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="android" value="Android アプリ + RP902&lt;br&gt;・work context 確定&lt;br&gt;・rule/master 取得&lt;br&gt;・RFID 読取&lt;br&gt;・session 内重複除去&lt;br&gt;・local judgement&lt;br&gt;・read result bundle 登録" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=14;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;" parent="1" vertex="1">
+          <mxGeometry x="80" y="190" width="280" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="postgres" value="PostgreSQL&lt;br&gt;Android 用 View / Function / 制約で安全に利用" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=16;fontStyle=1;align=center;verticalAlign=top;spacingTop=8;" parent="1" vertex="1">
+          <mxGeometry x="520" y="140" width="430" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="rule" value="rule&lt;br&gt;帳票ルール / version" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="550" y="205" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="master" value="master&lt;br&gt;設備マスタ snapshot" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="750" y="205" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="result" value="result&lt;br&gt;読取結果 / 判定結果" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="550" y="295" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="api" value="api view / function&lt;br&gt;work context / rule bundle / equipment snapshot / read result registration / final result view" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=12;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;" parent="1" vertex="1">
+          <mxGeometry x="750" y="295" width="170" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="audit" value="audit&lt;br&gt;端末 / session / 実行時刻 / 結果" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="550" y="385" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="xcgate" value="XCgate&lt;br&gt;final result view 参照" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=15;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1090" y="285" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" value="1. work context 取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2F5597;fontSize=11;labelBackgroundColor=#FFFFFF;" parent="1" source="android" target="api" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="2. rule bundle 取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#38761D;fontSize=11;labelBackgroundColor=#FFFFFF;" parent="1" source="android" target="rule" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="3. equipment snapshot 取得" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#38761D;fontSize=11;labelBackgroundColor=#FFFFFF;" parent="1" source="android" target="master" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" value="4. read result bundle 登録" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2F5597;fontSize=11;labelBackgroundColor=#FFFFFF;" parent="1" source="android" target="result" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="x1" value="final result view 参照" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#B85450;fontSize=11;labelBackgroundColor=#FFFFFF;" parent="1" source="xcgate" target="api" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>

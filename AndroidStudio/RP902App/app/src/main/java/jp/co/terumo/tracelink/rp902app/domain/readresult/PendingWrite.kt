@@ -1,13 +1,13 @@
-package jp.co.terumo.tracelink.rp902app.domain.upload
+package jp.co.terumo.tracelink.rp902app.domain.readresult
 
 /**
- * 送信に失敗し、再送待ちになっている upload payload。
+ * PostgreSQL への結果登録に失敗し、再実行待ちになっている書き込み。
  *
  * 現在の in-memory queue では `id` に `sessionId` を使い、同じ session の失敗を重複登録しない。
  */
-data class PendingUpload(
+data class PendingWrite(
     val id: String,
-    val payload: InventoryUploadPayload,
+    val bundle: ReadResultRegistrationBundle,
     val queuedAtEpochMillis: Long,
     val lastAttemptAtEpochMillis: Long,
     val attemptCount: Int,

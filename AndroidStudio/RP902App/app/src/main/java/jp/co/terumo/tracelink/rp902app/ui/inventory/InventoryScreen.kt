@@ -37,7 +37,7 @@ import jp.co.terumo.tracelink.rp902app.domain.log.AppLogEntry
 import jp.co.terumo.tracelink.rp902app.domain.log.AppLogLevel
 import jp.co.terumo.tracelink.rp902app.domain.reader.ReaderConnectionState
 import jp.co.terumo.tracelink.rp902app.domain.reader.displayText
-import jp.co.terumo.tracelink.rp902app.domain.upload.UploadState
+import jp.co.terumo.tracelink.rp902app.domain.readresult.RegistrationState
 import jp.co.terumo.tracelink.rp902app.ui.theme.TraceLink_RP902AppTheme
 
 /**
@@ -58,8 +58,8 @@ fun InventoryRoute(
         onDisconnect = viewModel::disconnect,
         onStartInventory = viewModel::startInventory,
         onStopInventory = viewModel::stopInventory,
-        onUpload = viewModel::uploadSession,
-        onRetryPendingUploads = viewModel::retryPendingUploads,
+        onRegister = viewModel::registerCurrentSessionResults,
+        onRetryPendingWrites = viewModel::retryPendingWrites,
         onClearSession = viewModel::clearSession,
         modifier = modifier,
     )
@@ -69,7 +69,7 @@ fun InventoryRoute(
  * Inventory 画面本体。
  *
  * この関数は渡された state を表示し、ボタン操作を callback として返すだけにする。
- * upload や reader 操作の成否判断をここへ入れると、状態管理が画面に分散して壊れやすくなる。
+ * 結果登録や reader 操作の成否判断をここへ入れると、状態管理が画面に分散して壊れやすくなる。
  */
 @Composable
 fun InventoryScreen(
@@ -78,8 +78,8 @@ fun InventoryScreen(
     onDisconnect: () -> Unit,
     onStartInventory: () -> Unit,
     onStopInventory: () -> Unit,
-    onUpload: () -> Unit,
-    onRetryPendingUploads: () -> Unit,
+    onRegister: () -> Unit,
+    onRetryPendingWrites: () -> Unit,
     onClearSession: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -100,8 +100,8 @@ fun InventoryScreen(
                 onDisconnect = onDisconnect,
                 onStartInventory = onStartInventory,
                 onStopInventory = onStopInventory,
-                onUpload = onUpload,
-                onRetryPendingUploads = onRetryPendingUploads,
+                onRegister = onRegister,
+                onRetryPendingWrites = onRetryPendingWrites,
                 onClearSession = onClearSession,
             )
         }
@@ -154,14 +154,14 @@ private fun StatusSection(uiState: InventoryUiState) {
                 color = MaterialTheme.colorScheme.tertiary,
             )
             StatusPill(
-                label = "Upload",
-                value = uiState.uploadState.displayText(),
-                color = uploadColor(uiState.uploadState),
+                label = "Registration",
+                value = uiState.registrationState.displayText(),
+                color = registrationColor(uiState.registrationState),
             )
             StatusPill(
-                label = "Queued",
-                value = uiState.pendingUploadCount.toString(),
-                color = if (uiState.pendingUploadCount > 0) {
+                label = "Pending writes",
+                value = uiState.pendingWriteCount.toString(),
+                color = if (uiState.pendingWriteCount > 0) {
                     MaterialTheme.colorScheme.error
                 } else {
                     MaterialTheme.colorScheme.outline
@@ -179,12 +179,12 @@ private fun ActionSection(
     onDisconnect: () -> Unit,
     onStartInventory: () -> Unit,
     onStopInventory: () -> Unit,
-    onUpload: () -> Unit,
-    onRetryPendingUploads: () -> Unit,
+    onRegister: () -> Unit,
+    onRetryPendingWrites: () -> Unit,
     onClearSession: () -> Unit,
 ) {
     val connected = uiState.connectionState == ReaderConnectionState.Connected
-    val uploading = uiState.uploadState == UploadState.Uploading
+    val registering = uiState.registrationState == RegistrationState.Registering
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionTitle("Actions")
@@ -215,14 +215,14 @@ private fun ActionSection(
                 secondary = true,
             )
             ActionButton(
-                text = "Upload",
-                enabled = uiState.tags.isNotEmpty() && !uploading,
-                onClick = onUpload,
+                text = "Register",
+                enabled = uiState.tags.isNotEmpty() && !registering,
+                onClick = onRegister,
             )
             ActionButton(
-                text = "Retry",
-                enabled = uiState.pendingUploadCount > 0 && !uploading,
-                onClick = onRetryPendingUploads,
+                text = "Retry writes",
+                enabled = uiState.pendingWriteCount > 0 && !registering,
+                onClick = onRetryPendingWrites,
             )
             ActionButton(
                 text = "Clear",
@@ -384,11 +384,11 @@ private fun connectionColor(connectionState: ReaderConnectionState): Color = whe
 }
 
 @Composable
-private fun uploadColor(uploadState: UploadState): Color = when (uploadState) {
-    UploadState.Idle -> MaterialTheme.colorScheme.outline
-    UploadState.Uploading -> MaterialTheme.colorScheme.tertiary
-    is UploadState.Completed -> MaterialTheme.colorScheme.primary
-    is UploadState.Failed -> MaterialTheme.colorScheme.error
+private fun registrationColor(registrationState: RegistrationState): Color = when (registrationState) {
+    RegistrationState.Idle -> MaterialTheme.colorScheme.outline
+    RegistrationState.Registering -> MaterialTheme.colorScheme.tertiary
+    is RegistrationState.Completed -> MaterialTheme.colorScheme.primary
+    is RegistrationState.Failed -> MaterialTheme.colorScheme.error
 }
 
 private fun AppLogEntry.displayText(): String =
@@ -404,7 +404,7 @@ private fun AppLogCategory.displayText(): String = when (this) {
     AppLogCategory.System -> "SYSTEM"
     AppLogCategory.Reader -> "READER"
     AppLogCategory.Inventory -> "INVENTORY"
-    AppLogCategory.Upload -> "UPLOAD"
+    AppLogCategory.ResultRegistration -> "RESULT"
 }
 
 @Preview(showBackground = true)
@@ -436,8 +436,8 @@ private fun InventoryScreenPreview() {
             onDisconnect = {},
             onStartInventory = {},
             onStopInventory = {},
-            onUpload = {},
-            onRetryPendingUploads = {},
+            onRegister = {},
+            onRetryPendingWrites = {},
             onClearSession = {},
         )
     }

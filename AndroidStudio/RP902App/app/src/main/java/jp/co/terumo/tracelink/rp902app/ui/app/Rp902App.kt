@@ -53,7 +53,7 @@ private enum class AppRoute(
  * アプリの画面 shell。
  *
  * 下部 navigation で Inventory / Logs / Settings を切り替え、Android runtime permission の
- * launcher もここで扱う。reader 接続や upload の実処理は ViewModel 経由で Repository に渡し、
+ * launcher もここで扱う。reader 接続や結果登録の実処理は ViewModel 経由で Repository に渡し、
  * Composable から vendor SDK や data layer を直接触らない構成にしている。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,8 +127,8 @@ fun Rp902App(
                 onDisconnect = inventoryViewModel::disconnect,
                 onStartInventory = inventoryViewModel::startInventory,
                 onStopInventory = inventoryViewModel::stopInventory,
-                onUpload = inventoryViewModel::uploadSession,
-                onRetryPendingUploads = inventoryViewModel::retryPendingUploads,
+                onRegister = inventoryViewModel::registerCurrentSessionResults,
+                onRetryPendingWrites = inventoryViewModel::retryPendingWrites,
                 onClearSession = inventoryViewModel::clearSession,
                 modifier = Modifier.padding(innerPadding),
             )
